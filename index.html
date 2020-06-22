@@ -96,9 +96,11 @@
 
 	<script src="js/three.js"></script>
 	<script src="js/OrbitControls.js"></script>
-	<!-- <script>
-		var scene = new THREE.Scene();
-		var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+	<script src="js/TeapotBufferGeometry.js"></script>
+	<script src="js/geometry.js"></script>
+	<script>
+		var scene = new THREE.Scene( );
+		var camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
 
 		var renderer = new THREE.WebGLRenderer();
 		renderer.setSize(window.innerWidth, window.innerHeight);
@@ -116,45 +118,41 @@
 		controls = new THREE.OrbitControls(camera, renderer.domElement);
 
 		// CUBE
-		var geometry = new THREE.CubeGeometry(2, 2, 2);
-		var cubeMaterials = [
-			new THREE.MeshBasicMaterial({
-				map: new THREE.TextureLoader().load('img/1.png'),
-				side: THREE.DoubleSide
-			}), // Right side
-			new THREE.MeshBasicMaterial({
-				map: new THREE.TextureLoader().load('img/2.png'),
-				side: THREE.DoubleSide
-			}), // Left side
-			new THREE.MeshBasicMaterial({
-				map: new THREE.TextureLoader().load('img/3.png'),
-				side: THREE.DoubleSide
-			}), // Top side
-			new THREE.MeshBasicMaterial({
-				map: new THREE.TextureLoader().load('img/4.png'),
-				side: THREE.DoubleSide
-			}), // Bottom side
-			new THREE.MeshBasicMaterial({
-				map: new THREE.TextureLoader().load('img/5.png'),
-				side: THREE.DoubleSide
-			}), // Front side
-			new THREE.MeshBasicMaterial({
-				map: new THREE.TextureLoader().load('img/6.png'),
-				side: THREE.DoubleSide
-			}) // Back side
-		];
+		var geometry = new THREE.TorusGeometry( 2, 0.5, 20, 100 );
+		/*
+		- Hình hộp: BoxGeometry(a, b, c)
+		- Hình Cầu: SphereGeometry( 3, 50, 50 )
+		- Hình nón: CylinderGeometry(0, 2, 6, 50, 1)
+		- Hình Trụ: CylinderGeometry( 2, 2, 4, 30 );
+		- Bánh xe: TorusGeometry( 2, 0.5, 20, 100 )
+		- Ấm trà: TeapotBufferGeometry( 2, 2, 4);
+
+		*/
+
+
+
 
 		// Create a MeshFaceMaterial, which allows the cube to have different materials on each face
-		var cubeMaterial = new THREE.MeshFaceMaterial(cubeMaterials);
-		var cube = new THREE.Mesh(geometry, cubeMaterial);
-		scene.add(cube);
+		// var cubeMaterial = new THREE.MeshFaceMaterial( cubeMaterials );
+		// var cubeMaterial = new THREE.MeshBasicMaterial( { color: 0xffffff, wireframe: true } );
+		var cubeMaterial = new THREE.MeshPhongMaterial( { color: 0xff0000});
+		var cube = new THREE.Mesh( geometry, cubeMaterial );
+		scene.add( cube );
 
-		camera.position.z = 7;
+		var directionalLight = new THREE.DirectionalLight(0xffffff, 1.2);
+		directionalLight.position.x = 0;
+		directionalLight.position.y = 5;
+		directionalLight.position.z = 0;
+		scene.add(directionalLight)
+
+		scene.fog = new THREE.Fog(0xffffff, 0, 20000);
+		renderer.setClearColor(scene.fog.color, 1);
+		camera.position.z = 10;
 
 		// game logic
-		var update = function () {
-			//cube.rotation.x += 0.01;
-			//cube.rotation.y += 0.005;
+		var update = function( )
+		{
+			cube.rotation.x += 0.01;
 		};
 
 		// draw scene
@@ -163,11 +161,12 @@
 		};
 
 		// run game loop (update, render, repeat)
-		var GameLoop = function () {
-			requestAnimationFrame(GameLoop);
+		var GameLoop = function( )
+		{
 
-			update();
-			render();
+			// update( );
+			render( );
+			requestAnimationFrame( GameLoop );
 		};
 
 		GameLoop();
