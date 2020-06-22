@@ -171,9 +171,8 @@
 		});
 
 		controls = new THREE.OrbitControls(camera, renderer.domElement);
-
 		// CUBE
-		var geometry = new THREE.TorusGeometry(2, 0.5, 20, 100);
+		var BoxGeometry = new THREE.TorusGeometry(2, 0.5, 20, 100);
 		/*
 		- Hình hộp: BoxGeometry(a, b, c)
 		- Hình Cầu: SphereGeometry( 3, 50, 50 )
@@ -190,10 +189,10 @@
 		// Create a MeshFaceMaterial, which allows the cube to have different materials on each face
 		// var cubeMaterial = new THREE.MeshFaceMaterial( cubeMaterials );
 		// var cubeMaterial = new THREE.MeshBasicMaterial( { color: 0xffffff, wireframe: true } );
-		var cubeMaterial = new THREE.MeshPhongMaterial({
+		var cubeMaterial = new THREE.PointsMaterial({
 			color: 0xff0000
 		});
-		var cube = new THREE.Mesh(geometry, cubeMaterial);
+		var cube = new THREE.Mesh(BoxGeometry, cubeMaterial);
 		scene.add(cube);
 
 		var directionalLight = new THREE.DirectionalLight(0xffffff, 1.2);
@@ -206,21 +205,11 @@
 		renderer.setClearColor(scene.fog.color, 1);
 		camera.position.z = 10;
 
-		// game logic
-		var update = function () {
-			cube.rotation.x += 0.01;
-		};
-
-		// draw scene
-		var render = function () {
-			renderer.render(scene, camera);
-		};
-
 		// run game loop (update, render, repeat)
 		var GameLoop = function () {
-
-			// update( );
-			render();
+			// cube.rotation.x += 0.01; //update
+			controls.update();
+			renderer.render(scene, camera);
 			requestAnimationFrame(GameLoop);
 		};
 
