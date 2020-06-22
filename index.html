@@ -48,7 +48,7 @@
 
 	<div class="container-fluid">
 		<div class="row">
-			<nav class="col-md-2 d-none d-md-block bg-light sidebar">
+			<!-- <nav class="col-md-2 d-none d-md-block bg-light sidebar">
 				<div class="sidebar-sticky">
 					<li class="nav-item dropdown">
 						<a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button"
@@ -71,16 +71,10 @@
 					</ul>
 
 				</div>
-			</nav>
+			</nav> -->
 
-			<main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-4">
-				Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cras condimentum egestas luctus. Fusce aliquam
-				condimentum
-				erat. In ac elit viverra, sagittis elit accumsan, eleifend felis. Proin at erat iaculis, feugiat mi a,
-				rhoncus
-				purus. Duis vel orci vitae lectus pretium aliquam. Phasellus id fermentum nibh, vitae aliquam tortor.
-				Sed ac ligula
-				et libero lobortis tempor eu et nibh. Etiam vehicula eleifend est, quis laoreet magna porttitor in.
+			<main role="main" class="" id="mainrow">
+
 			</main>
 		</div>
 	</div>
@@ -99,12 +93,12 @@
 	<script src="js/TeapotBufferGeometry.js"></script>
 	<script src="js/geometry.js"></script>
 	<script>
-		var scene = new THREE.Scene( );
-		var camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
+		var scene = new THREE.Scene();
+		var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 
 		var renderer = new THREE.WebGLRenderer();
 		renderer.setSize(window.innerWidth, window.innerHeight);
-		document.body.appendChild(renderer.domElement);
+		document.getElementById("mainrow").appendChild(renderer.domElement);
 
 		// check when the browser size has changed and adjust the camera accordingly
 		window.addEventListener('resize', function () {
@@ -118,7 +112,7 @@
 		controls = new THREE.OrbitControls(camera, renderer.domElement);
 
 		// CUBE
-		var geometry = new THREE.TorusGeometry( 2, 0.5, 20, 100 );
+		var geometry = new THREE.TorusGeometry(2, 0.5, 20, 100);
 		/*
 		- Hình hộp: BoxGeometry(a, b, c)
 		- Hình Cầu: SphereGeometry( 3, 50, 50 )
@@ -135,9 +129,11 @@
 		// Create a MeshFaceMaterial, which allows the cube to have different materials on each face
 		// var cubeMaterial = new THREE.MeshFaceMaterial( cubeMaterials );
 		// var cubeMaterial = new THREE.MeshBasicMaterial( { color: 0xffffff, wireframe: true } );
-		var cubeMaterial = new THREE.MeshPhongMaterial( { color: 0xff0000});
-		var cube = new THREE.Mesh( geometry, cubeMaterial );
-		scene.add( cube );
+		var cubeMaterial = new THREE.MeshPhongMaterial({
+			color: 0xff0000
+		});
+		var cube = new THREE.Mesh(geometry, cubeMaterial);
+		scene.add(cube);
 
 		var directionalLight = new THREE.DirectionalLight(0xffffff, 1.2);
 		directionalLight.position.x = 0;
@@ -150,8 +146,7 @@
 		camera.position.z = 10;
 
 		// game logic
-		var update = function( )
-		{
+		var update = function () {
 			cube.rotation.x += 0.01;
 		};
 
@@ -161,16 +156,15 @@
 		};
 
 		// run game loop (update, render, repeat)
-		var GameLoop = function( )
-		{
+		var GameLoop = function () {
 
 			// update( );
-			render( );
-			requestAnimationFrame( GameLoop );
+			render();
+			requestAnimationFrame(GameLoop);
 		};
 
 		GameLoop();
-	</script> -->
+	</script>
 </body>
 
 </html>
