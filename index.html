@@ -174,7 +174,12 @@
 
 		controls = new THREE.OrbitControls(camera, renderer.domElement);
 		// CUBE
-		var BoxGeometry = new THREE.TorusGeometry(2, 0.5, 20, 100);
+		var BoxGeometry = new THREE.BoxGeometry(2, 2, 5);
+		var SphereGeometry = new THREE.SphereGeometry( 3, 50, 50 );
+		var ConeGeometry = new THREE.CylinderGeometry(0, 2, 6, 50, 1);
+		var CylinderGeometry = new THREE.CylinderGeometry( 2, 2, 4, 30 );
+		var TorusGeometry = new THREE.TorusGeometry( 2, 0.5, 20, 100 );
+		var TeapotGeometry = new THREE.TeapotBufferGeometry( 2, 2, 4);
 		/*
 		- Hình hộp: BoxGeometry(a, b, c)
 		- Hình Cầu: SphereGeometry( 3, 50, 50 )
@@ -184,18 +189,18 @@
 		- Ấm trà: TeapotBufferGeometry( 2, 2, 4);
 
 		*/
-
-
-
-
 		// Create a MeshFaceMaterial, which allows the cube to have different materials on each face
 		// var cubeMaterial = new THREE.MeshFaceMaterial( cubeMaterials );
 		// var cubeMaterial = new THREE.MeshBasicMaterial( { color: 0xffffff, wireframe: true } );
-		var cubeMaterial = new THREE.PointsMaterial({
-			color: 0xff0000
-		});
-		var cube = new THREE.Mesh(BoxGeometry, cubeMaterial);
-		scene.add(cube);
+		var BoxMaterial = new THREE.MeshBasicMaterial({color: 0xff0000});
+		var SphereMaterial = new THREE.MeshBasicMaterial({color: 0xff0000});
+		var ConeMaterial = new THREE.MeshBasicMaterial({color: 0xff0000});
+		var CylinderMaterial = new THREE.MeshBasicMaterial({color: 0xff0000});
+		var TorusMaterial = new THREE.MeshBasicMaterial({color: 0xff0000});
+		var TeapotMaterial = new THREE.MeshBasicMaterial({color: 0xff0000});
+		
+		var box = new THREE.Mesh(BoxGeometry, BoxMaterial);
+		scene.add(box);
 
 		var directionalLight = new THREE.DirectionalLight(0xffffff, 1.2);
 		directionalLight.position.x = 0;
