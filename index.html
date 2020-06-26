@@ -10,7 +10,7 @@
 </head>
 
 <body>
-	<nav class="navbar navbar-expand-lg fixed-top navbar-dark bg-dark shadow p-2">
+	<nav class="navbar navbar-expand-lg fixed-top navbar-light bg-light shadow p-2">
 		<a class="navbar-brand pl-5" href=" #">T E A M B</a>
 		<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
 			aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
@@ -90,9 +90,11 @@
 			</ul>
 		</div>
 	</nav>
-
-	<div class="container-fluid">
-		<div class="transform">
+	
+	<div>
+		<div id="rendering" class="w-100 h-100 position-absolute">
+		</div>
+		<div class="transform col-1">
 			<button type="button" class="btn btn-light shadow">
 				<svg class="bi bi-arrows-move" width="1em" height="1em" viewBox="0 0 16 16" fill="currentColor"
 					xmlns="http://www.w3.org/2000/svg">
@@ -108,7 +110,7 @@
 				</svg>
 			</button>
 		</div>
-		<div class="transform">
+		<div class="transform col-1">
 			<button type="button" class="btn btn-light shadow">
 				<svg class="bi bi-arrow-repeat" width="1em" height="1em" viewBox="0 0 16 16" fill="currentColor"
 					xmlns="http://www.w3.org/2000/svg">
@@ -119,7 +121,7 @@
 				</svg>
 			</button>
 		</div>
-		<div class="transform">
+		<div class="transform col-1">
 			<button type="button" class="btn btn-light shadow">
 				<svg class="bi bi-arrows-fullscreen" width="1em" height="1em" viewBox="0 0 16 16" fill="currentColor"
 					xmlns="http://www.w3.org/2000/svg">
@@ -135,8 +137,6 @@
 						d="M5.5 1.5A.5.5 0 0 0 5 1H1.5a.5.5 0 0 0-.5.5V5a.5.5 0 0 0 1 0V2h3a.5.5 0 0 0 .5-.5z" />
 				</svg>
 			</button>
-		</div>
-		<div id="rendering" style="z-index: 0;">
 		</div>
 	</div>
 
@@ -159,6 +159,7 @@
 
 		var renderer = new THREE.WebGLRenderer();
 		renderer.setSize(window.innerWidth, window.innerHeight);
+		console.log(window.innerWidth, window.innerHeight);
 		document.getElementById("rendering").appendChild(renderer.domElement);
 
 		// check when the browser size has changed and adjust the camera accordingly
