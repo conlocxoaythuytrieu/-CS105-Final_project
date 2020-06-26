@@ -90,10 +90,9 @@
 			</ul>
 		</div>
 	</nav>
-	
+	<div id="rendering" class="w-100 h-100 position-fixed">
+	</div>
 	<div>
-		<div id="rendering" class="w-100 h-100 position-absolute">
-		</div>
 		<div class="transform col-1">
 			<button type="button" class="btn btn-light shadow">
 				<svg class="bi bi-arrows-move" width="1em" height="1em" viewBox="0 0 16 16" fill="currentColor"
@@ -166,9 +165,11 @@
 		window.addEventListener('resize', function () {
 			var WIDTH = window.innerWidth;
 			var HEIGHT = window.innerHeight;
-			renderer.setSize(WIDTH, HEIGHT);
+			
 			camera.aspect = WIDTH / HEIGHT;
 			camera.updateProjectionMatrix();
+			
+			renderer.setSize(WIDTH, HEIGHT);
 		});
 
 		controls = new THREE.OrbitControls(camera, renderer.domElement);
