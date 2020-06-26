@@ -26,12 +26,12 @@
 						Geometry
 					</a>
 					<div class="dropdown-menu" aria-labelledby="navbarDropdown">
-						<a class="dropdown-item" href="#">Box</a>
-						<a class="dropdown-item" href="#">Sphere</a>
-						<a class="dropdown-item" href="#">Cone</a>
-						<a class="dropdown-item" href="#">Cylinder</a>
-						<a class="dropdown-item" href="#">Torus</a>
-						<a class="dropdown-item" href="#">Teapot</a>
+						<a class="dropdown-item" href="#" onclick="return AddGeo(1);">Box</a>
+						<a class="dropdown-item" href="#" onclick="return AddGeo(2);">Sphere</a>
+						<a class="dropdown-item" href="#" onclick="return AddGeo(3);">Cone</a>
+						<a class="dropdown-item" href="#" onclick="return AddGeo(4);">Cylinder</a>
+						<a class="dropdown-item" href="#" onclick="return AddGeo(5);">Torus</a>
+						<a class="dropdown-item" href="#" onclick="return AddGeo(6);">Teapot</a>
 					</div>
 				</li>
 				<li class="nav-item dropdown">
@@ -165,10 +165,10 @@
 		window.addEventListener('resize', function () {
 			var WIDTH = window.innerWidth;
 			var HEIGHT = window.innerHeight;
-			
+
 			camera.aspect = WIDTH / HEIGHT;
 			camera.updateProjectionMatrix();
-			
+
 			renderer.setSize(WIDTH, HEIGHT);
 		});
 
@@ -199,8 +199,7 @@
 		var TorusMaterial = new THREE.MeshBasicMaterial({color: 0xff0000});
 		var TeapotMaterial = new THREE.MeshBasicMaterial({color: 0xff0000});
 		
-		var box = new THREE.Mesh(BoxGeometry, BoxMaterial);
-		scene.add(box);
+		// scene.add(box);
 
 		var directionalLight = new THREE.DirectionalLight(0xffffff, 1.2);
 		directionalLight.position.x = 0;
@@ -212,6 +211,28 @@
 		renderer.setClearColor(scene.fog.color, 1);
 		camera.position.z = 10;
 
+		var AddGeo = function (id) {
+			// controls.update();
+			
+			while(scene.children.length > 0){ 
+    			scene.remove(scene.children[0]); 
+			}
+			switch(id)
+			{
+				case 1: geo = new THREE.Mesh(BoxGeometry, BoxMaterial);break;
+				case 2: geo = new THREE.Mesh(SphereGeometry, SphereMaterial);break;
+				case 3: geo = new THREE.Mesh(ConeGeometry, ConeMaterial);break;
+				case 4: geo = new THREE.Mesh(CylinderGeometry, CylinderMaterial);break;
+				case 5: geo = new THREE.Mesh(TorusGeometry, TorusMaterial);break;
+				case 6: geo = new THREE.Mesh(TeapotGeometry, TeapotMaterial);break;
+			}
+			
+			geo.rotation.x += 0.01; // animation
+			scene.add(geo);
+			renderer.render(scene, camera);
+			console.log(id)
+			requestAnimationFrame(AddGeo);
+		}
 		// run game loop (update, render, repeat)
 		var GameLoop = function () {
 			// cube.rotation.x += 0.01; //update
