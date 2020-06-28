@@ -168,7 +168,7 @@
 					<div class="d-flex font-weight-bold text-light">
 						<span class="mr-auto valueSpanFar"></span>
 						<div class="w-75">
-							<input type="range" class="custom-range ml-3" id="customRangeFar" min="1000" max="99999"
+							<input type="range" class="custom-range ml-3" id="customRangeFar" min="2000" max="99999"
 								value="10000">
 						</div>
 					</div>
@@ -206,16 +206,19 @@
 			$valueSpanFOV.html("FOV: " + $valueFOV.val());
 			$valueFOV.on('input change', () => {
 				$valueSpanFOV.html("FOV: " + $valueFOV.val());
+				setFOV($valueFOV.val());
 			});
 
 			$valueSpanNear.html("Near: " + $valueNear.val());
 			$valueNear.on('input change', () => {
 				$valueSpanNear.html("Near: " + $valueNear.val());
+				setNear($valueNear.val());
 			});
 
 			$valueSpanFar.html("Far: " + $valueFar.val());
 			$valueFar.on('input change', () => {
 				$valueSpanFar.html("Far: " + $valueFar.val());
+				setFar($valueFar.val());
 			});
 		});
 	</script>
