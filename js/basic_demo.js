@@ -37,19 +37,11 @@
 		// Create a MeshFaceMaterial, which allows the cube to have different materials on each face
 		// var cubeMaterial = new THREE.MeshFaceMaterial( cubeMaterials );
 		// var cubeMaterial = new THREE.MeshBasicMaterial( { color: 0xffffff, wireframe: true } );
-		var BoxMaterial = new THREE.MeshBasicMaterial({color: 0xff0000});
-		var SphereMaterial = new THREE.MeshBasicMaterial({color: 0xff0000});
-		var ConeMaterial = new THREE.MeshBasicMaterial({color: 0xff0000});
-		var CylinderMaterial = new THREE.MeshBasicMaterial({color: 0xff0000});
-		var TorusMaterial = new THREE.MeshBasicMaterial({color: 0xff0000});
-		var TeapotMaterial = new THREE.MeshBasicMaterial({color: 0xff0000});
+		var Material = new THREE.MeshBasicMaterial({color: 0xff0000});
 		
-		// scene.add(box);
 
 		var directionalLight = new THREE.DirectionalLight(0xffffff, 1.2);
-		directionalLight.position.x = 0;
-		directionalLight.position.y = 5;
-		directionalLight.position.z = 0;
+		directionalLight.position.set(0, 5, 0);
 		scene.add(directionalLight)
 
 		scene.fog = new THREE.Fog(0xffffff, 0, 20000);
@@ -64,12 +56,12 @@
 			}
 			switch(id)
 			{
-				case 1: geo = new THREE.Mesh(BoxGeometry, BoxMaterial);break;
-				case 2: geo = new THREE.Mesh(SphereGeometry, SphereMaterial);break;
-				case 3: geo = new THREE.Mesh(ConeGeometry, ConeMaterial);break;
-				case 4: geo = new THREE.Mesh(CylinderGeometry, CylinderMaterial);break;
-				case 5: geo = new THREE.Mesh(TorusGeometry, TorusMaterial);break;
-				case 6: geo = new THREE.Mesh(TeapotGeometry, TeapotMaterial);break;
+				case 1: geo = new THREE.Mesh(BoxGeometry, Material);break;
+				case 2: geo = new THREE.Mesh(SphereGeometry, Material);break;
+				case 3: geo = new THREE.Mesh(ConeGeometry, Material);break;
+				case 4: geo = new THREE.Mesh(CylinderGeometry, Material);break;
+				case 5: geo = new THREE.Mesh(TorusGeometry, Material);break;
+				case 6: geo = new THREE.Mesh(TeapotGeometry, Material);break;
 			}
 			
 			geo.rotation.x += 0.01; // animation
@@ -80,7 +72,6 @@
 		}
 		// run game loop (update, render, repeat)
 		var GameLoop = function () {
-			// cube.rotation.x += 0.01; //update
 			controls.update();
 			renderer.render(scene, camera);
 			requestAnimationFrame(GameLoop);
