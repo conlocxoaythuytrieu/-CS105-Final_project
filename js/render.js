@@ -2,18 +2,25 @@ var scene, camera, renderer;
 var mesh_floor;
 
 var init = function () {
-
+	// Scene
 	scene = new THREE.Scene();
-	// scene.background = new THREE.Color(0x343a40);
+	scene.background = new THREE.Color(0x343a40);
 
-	// grid
+	// Grid
 	var gridHelper = new THREE.GridHelper(1000, 100, 0xffffff, 0xffffff);
 	scene.add(gridHelper);
 
+	// Coordinate axes
+	var axesHelper = new THREE.AxesHelper(100);
+	scene.add(axesHelper);
+
+	// Camera
 	camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 	camera.position.set(1, 15, 20);
+	console.log("camera position: ", camera.position);
 	camera.lookAt(new THREE.Vector3(0, 0, 0));
 
+	//
 	renderer = new THREE.WebGLRenderer();
 	renderer.setSize(window.innerWidth, window.innerHeight);
 	document.getElementById("rendering").appendChild(renderer.domElement);
@@ -28,11 +35,12 @@ var init = function () {
 
 		renderer.setSize(WIDTH, HEIGHT);
 	});
+
+	controls = new THREE.OrbitControls(camera, renderer.domElement);
 }
 
 init();
 
-controls = new THREE.OrbitControls(camera, renderer.domElement);
 // CUBE
 var BoxGeometry = new THREE.BoxGeometry(2, 2, 5);
 var SphereGeometry = new THREE.SphereGeometry(3, 50, 50);
@@ -40,20 +48,10 @@ var ConeGeometry = new THREE.CylinderGeometry(0, 2, 6, 50, 1);
 var CylinderGeometry = new THREE.CylinderGeometry(2, 2, 4, 30);
 var TorusGeometry = new THREE.TorusGeometry(2, 0.5, 20, 100);
 var TeapotGeometry = new THREE.TeapotBufferGeometry(2, 2, 4);
-/*
-- Hình hộp: BoxGeometry(a, b, c)
-- Hình Cầu: SphereGeometry( 3, 50, 50 )
-- Hình nón: CylinderGeometry(0, 2, 6, 50, 1)
-- Hình Trụ: CylinderGeometry( 2, 2, 4, 30 );
-- Bánh xe: TorusGeometry( 2, 0.5, 20, 100 )
-- Ấm trà: TeapotBufferGeometry( 2, 2, 4);
 
-*/
-// Create a MeshFaceMaterial, which allows the cube to have different materials on each face
-// var cubeMaterial = new THREE.MeshFaceMaterial( cubeMaterials );
-// var cubeMaterial = new THREE.MeshBasicMaterial( { color: 0xffffff, wireframe: true } );
 var Material = new THREE.MeshBasicMaterial({
-	color: 0xff0000
+	color: 0xffffff
+	// wireframe: true
 });
 
 
@@ -67,11 +65,13 @@ var geo = new THREE.Mesh();
 
 var AddGeo = function (id) {
 	// controls.update();
-	if (id>0 && id<7)
+	if (id > 0 && id < 7)
 		scene.remove(geo);
 	switch (id) {
 		case 1:
-			geo = new THREE.Mesh(BoxGeometry, Material);
+			// geo = new THREE.Mesh(BoxGeometry, Material);
+			camera.fov = Math.floor(25 + 90);
+			camera.updateProjectionMatrix();
 			break;
 		case 2:
 			geo = new THREE.Mesh(SphereGeometry, Material);
