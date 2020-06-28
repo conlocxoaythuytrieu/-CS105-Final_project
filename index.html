@@ -26,12 +26,12 @@
 						Geometry
 					</a>
 					<div class="dropdown-menu" aria-labelledby="navbarDropdown">
-						<a class="dropdown-item" href="#" onclick="return AddGeo(1);">Box</a>
-						<a class="dropdown-item" href="#" onclick="return AddGeo(2);">Sphere</a>
-						<a class="dropdown-item" href="#" onclick="return AddGeo(3);">Cone</a>
-						<a class="dropdown-item" href="#" onclick="return AddGeo(4);">Cylinder</a>
-						<a class="dropdown-item" href="#" onclick="return AddGeo(5);">Torus</a>
-						<a class="dropdown-item" href="#" onclick="return AddGeo(6);">Teapot</a>
+						<a class="dropdown-item" href="#" onclick="AddGeo(1);">Box</a>
+						<a class="dropdown-item" href="#" onclick="AddGeo(2);">Sphere</a>
+						<a class="dropdown-item" href="#" onclick="AddGeo(3);">Cone</a>
+						<a class="dropdown-item" href="#" onclick="AddGeo(4);">Cylinder</a>
+						<a class="dropdown-item" href="#" onclick="AddGeo(5);">Torus</a>
+						<a class="dropdown-item" href="#" onclick="AddGeo(6);">Teapot</a>
 					</div>
 				</li>
 
@@ -41,9 +41,9 @@
 						Surface
 					</a>
 					<div class="dropdown-menu" aria-labelledby="navbarDropdown">
-						<a class="dropdown-item" href="#">Point</a>
-						<a class="dropdown-item" href="#">Line</a>
-						<a class="dropdown-item" href="#">Solid</a>
+						<a class="dropdown-item" href="#" onclick="return SetMeterial(1);">Point</a>
+						<a class="dropdown-item" href="#" onclick="return SetMeterial(2);">Line</a>
+						<a class="dropdown-item" href="#" onclick="return SetMeterial(3);">Solid</a>
 					</div>
 				</li>
 
@@ -187,6 +187,7 @@
 	<script src="js/TeapotBufferGeometry.js"></script>
 	<script src="js/geometry.js"></script>
 	<!-- <script src="js/basic_demo.js"></script> -->
+	<!-- <script src="js/test_demo.js"></script> -->
 	<script src="js/render.js"></script>
 	<script>
 		$(document).ready(function () {
