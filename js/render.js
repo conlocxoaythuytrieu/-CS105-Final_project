@@ -1,12 +1,20 @@
 var scene, camera, renderer;
-var mesh_floor;
+var geo = new THREE.Mesh();
+// CUBE
+var BoxGeometry = new THREE.BoxGeometry(50, 50, 50, 40, 40, 40);
+var SphereGeometry = new THREE.SphereGeometry(30, 60, 60);
+var ConeGeometry = new THREE.CylinderGeometry(0, 20, 60, 50, 10);
+var CylinderGeometry = new THREE.CylinderGeometry(20, 20, 40, 300);
+var TorusGeometry = new THREE.TorusGeometry(20, 5, 20, 100);
+var TeapotGeometry = new THREE.TeapotBufferGeometry(20, 8);
+var Material;
 
 var init = function () {
 	// Scene
 	scene = new THREE.Scene();
 	scene.background = new THREE.Color(0x343a40);
 
-	// grid
+	// Grid
 	var gridHelper = new THREE.GridHelper(400, 50, 0xffffff, 0xffffff);
 	scene.add(gridHelper);
 
@@ -15,9 +23,9 @@ var init = function () {
 	scene.add(axesHelper);
 
 	// Camera
-	camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+	camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 10000);
 	camera.position.set(1, 50, 100);
-	console.log("camera position: ", camera.position);
+	// console.log("camera position: ", camera.position);
 	camera.lookAt(new THREE.Vector3(0, 0, 0));
 
 	//
@@ -37,20 +45,8 @@ var init = function () {
 	});
 
 	controls = new THREE.OrbitControls(camera, renderer.domElement);
+	GameLoop();
 }
-
-init();
-var geo = new THREE.Mesh();
-controls = new THREE.OrbitControls(camera, renderer.domElement);
-// CUBE
-var BoxGeometry = new THREE.BoxGeometry(50, 50, 50, 40, 40, 40);
-var SphereGeometry = new THREE.SphereGeometry(30, 60, 60);
-var ConeGeometry = new THREE.CylinderGeometry(0, 20, 60, 50, 10);
-var CylinderGeometry = new THREE.CylinderGeometry(20, 20, 40, 300);
-var TorusGeometry = new THREE.TorusGeometry(20, 5, 20, 100);
-var TeapotGeometry = new THREE.TeapotBufferGeometry(20, 8);
-
-var Material;
 
 // var directionalLight = new THREE.DirectionalLight(0xffffff, 1.2);
 // directionalLight.position.set(0, 5, 0);
@@ -58,11 +54,12 @@ var Material;
 
 // scene.fog = new THREE.Fog(0x999999, 0, 20000);
 // renderer.setClearColor(scene.fog.color, 1);
-var type = 3, d_id;
-var SetMeterial = function (x){
+
+var type = 3,
+	d_id;
+var SetMaterial = function (x) {
 	type = x;
-	switch(type)
-	{
+	switch (type) {
 		case 1:
 			Material = new THREE.PointsMaterial({
 				color: 0xffffff,
@@ -87,47 +84,46 @@ var SetMeterial = function (x){
 var AddGeo = function (id) {
 	// console.log(type);
 	controls.update();
-	if (id>0 && id<7)
-		{
-			d_id = id;
-			scene.remove(geo);
-		}
+	if (id > 0 && id < 7) {
+		d_id = id;
+		scene.remove(geo);
+	}
 	switch (id) {
 		case 1:
 			if (type == 1)
 				geo = new THREE.Points(BoxGeometry, Material);
 			else
-			geo = new THREE.Mesh(BoxGeometry, Material);
+				geo = new THREE.Mesh(BoxGeometry, Material);
 			break;
 		case 2:
 			if (type == 1)
 				geo = new THREE.Points(SphereGeometry, Material);
 			else
-			geo = new THREE.Mesh(SphereGeometry, Material);
+				geo = new THREE.Mesh(SphereGeometry, Material);
 			break;
 		case 3:
 			if (type == 1)
 				geo = new THREE.Points(ConeGeometry, Material);
 			else
-			geo = new THREE.Mesh(ConeGeometry, Material);
+				geo = new THREE.Mesh(ConeGeometry, Material);
 			break;
 		case 4:
 			if (type == 1)
 				geo = new THREE.Points(CylinderGeometry, Material);
 			else
-			geo = new THREE.Mesh(CylinderGeometry, Material);
+				geo = new THREE.Mesh(CylinderGeometry, Material);
 			break;
 		case 5:
 			if (type == 1)
 				geo = new THREE.Points(TorusGeometry, Material);
 			else
-			geo = new THREE.Mesh(TorusGeometry, Material);
+				geo = new THREE.Mesh(TorusGeometry, Material);
 			break;
 		case 6:
 			if (type == 1)
 				geo = new THREE.Points(TeapotGeometry, Material);
 			else
-			geo = new THREE.Mesh(TeapotGeometry, Material);
+				geo = new THREE.Mesh(TeapotGeometry, Material);
 			break;
 	}
 
@@ -136,6 +132,7 @@ var AddGeo = function (id) {
 	renderer.render(scene, camera);
 	requestAnimationFrame(AddGeo);
 }
+
 // run game loop (update, render, repeat)
 var GameLoop = function () {
 	controls.update();
@@ -143,5 +140,4 @@ var GameLoop = function () {
 	requestAnimationFrame(GameLoop);
 };
 
-
-GameLoop();
+init();
