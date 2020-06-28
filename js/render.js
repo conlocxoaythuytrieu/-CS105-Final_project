@@ -63,13 +63,12 @@ var Material = new THREE.MeshBasicMaterial({
 
 // scene.fog = new THREE.Fog(0x999999, 0, 20000);
 // renderer.setClearColor(scene.fog.color, 1);
+var geo = new THREE.Mesh();
 
 var AddGeo = function (id) {
 	// controls.update();
-
-	while (scene.children.length > 0) {
-		scene.remove(scene.children[0]);
-	}
+	if (id>0 && id<7)
+		scene.remove(geo);
 	switch (id) {
 		case 1:
 			geo = new THREE.Mesh(BoxGeometry, Material);
