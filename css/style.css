@@ -15,3 +15,16 @@
     padding: 0.125em;
     margin-left: 1em;
 }
+
+#rendering {
+    position: absolute;
+    z-index: 1;
+}
+
+.dropdown-menu {
+    background-color: #EAEBED !important;
+}
+
+.dropdown .dropdown-menu a:hover {
+    background-color: #A3BAC3;
+}
