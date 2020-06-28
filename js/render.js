@@ -3,7 +3,7 @@ var geo = new THREE.Mesh();
 // CUBE
 var BoxGeometry = new THREE.BoxGeometry(50, 50, 50, 40, 40, 40);
 var SphereGeometry = new THREE.SphereGeometry(30, 60, 60);
-var ConeGeometry = new THREE.CylinderGeometry(0, 20, 60, 50, 10);
+var ConeGeometry = new THREE.ConeGeometry(0, 20, 60, 50, 10);
 var CylinderGeometry = new THREE.CylinderGeometry(20, 20, 40, 300);
 var TorusGeometry = new THREE.TorusGeometry(20, 5, 20, 100);
 var TeapotGeometry = new THREE.TeapotBufferGeometry(20, 8);
@@ -128,6 +128,9 @@ var AddGeo = function (id) {
 	}
 
 	// geo.rotation.x += 0.01; // animation
+	
+	var box = new THREE.Box3().setFromObject( geo );
+	geo.position.y-=box.min['y'];
 	scene.add(geo);
 	renderer.render(scene, camera);
 	requestAnimationFrame(AddGeo);
