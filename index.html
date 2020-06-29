@@ -41,9 +41,9 @@
 						Surface
 					</a>
 					<div class="dropdown-menu" aria-labelledby="navbarDropdown">
-						<a class="dropdown-item" href="#" onclick="return SetMaterial(1);">Point</a>
-						<a class="dropdown-item" href="#" onclick="return SetMaterial(2);">Line</a>
-						<a class="dropdown-item" href="#" onclick="return SetMaterial(3);">Solid</a>
+						<a class="dropdown-item" href="#" onclick="SetMaterial(1);">Point</a>
+						<a class="dropdown-item" href="#" onclick="SetMaterial(2);">Line</a>
+						<a class="dropdown-item" href="#" onclick="SetMaterial(3);">Solid</a>
 					</div>
 				</li>
 
@@ -184,14 +184,16 @@
 		integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous">
 	</script>
 	<script src="js/bootstrap.min.js"></script>
-
+	
 	<script src="js/three.js"></script>
 	<script src="js/OrbitControls.js"></script>
 	<script src="js/TeapotBufferGeometry.js"></script>
 	<script src="js/geometry.js"></script>
+	
+	<script src="js/TransformControls.js"></script>
 	<!-- <script src="js/basic_demo.js"></script> -->
-	<!-- <script src="js/test_demo.js"></script> -->
-	<script src="js/render.js"></script>
+	<script type="module" src="js/test_demo.js"></script>
+	<!-- <script src="js/render.js"></script> -->
 
 	<script>
 		$(document).ready(function () {
