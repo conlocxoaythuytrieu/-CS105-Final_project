@@ -1,151 +1,132 @@
-
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-<head>
-	<title>Dashed 3D Lines (Three.js)</title>
-	<meta charset="utf-8">
-	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
-</head>
-<body>
+	<head>
+	</head>
+	<body>
+		<script src="js/three.js"></script>
+		<script src="js/TransformControls.js"></script>
+		<script src="js/OrbitControls.js"></script>
+		
+		<script type="module">
 
-<script src="js/Three.js"></script>
-<script src="js/OrbitControls.js"></script>
+			import * as THREE from './js/three.module.js';
 
-<!-- jQuery code to display an information button and box when clicked. -->
-<a href="http://stemkoski.github.io/Three.js/">http://stemkoski.github.io/Three.js/</a>
-</div>
-<!-- ------------------------------------------------------------ -->
+			import { OrbitControls } from "https://threejs.org/examples/jsm/controls/OrbitControls.js";
+			import { TransformControls } from './jsm/TransformControls.js';
 
-<div id="ThreeJS" style="position: absolute; left:0px; top:0px"></div>
-<script>
-/*
-	Three.js "tutorials by example"
-	Author: Lee Stemkoski
-	Date: July 2013 (three.js v59dev)
+			var cameraPersp, cameraOrtho, currentCamera;
+			var scene, renderer, control, orbit;
 
-	Example described by "calude", at:	http://stackoverflow.com/questions/15084165/three-js-wireframe-only-shape-with-hidden-edges-as-dashed-lines
- */
+			init();
+			render();
 
-// MAIN
+			function init() {
 
-// standard global variables
-var container, scene, camera, renderer, controls, stats;
-var clock = new THREE.Clock();
-// custom global variables
-var cube;
+				renderer = new THREE.WebGLRenderer();
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				document.body.appendChild( renderer.domElement );
 
-init();
-animate();
+				const aspect = window.innerWidth / window.innerHeight;
 
-// FUNCTIONS 		
-function init() 
-{
-	// SCENE
-	scene = new THREE.Scene();
-	// CAMERA
-	var SCREEN_WIDTH = window.innerWidth, SCREEN_HEIGHT = window.innerHeight;
-	var VIEW_ANGLE = 45, ASPECT = SCREEN_WIDTH / SCREEN_HEIGHT, NEAR = 0.1, FAR = 20000;
-	camera = new THREE.PerspectiveCamera( VIEW_ANGLE, ASPECT, NEAR, FAR);
-	scene.add(camera);
-	camera.position.set(0,150,400);
-	camera.lookAt(scene.position);	
-	// RENDERER
-		renderer = new THREE.WebGLRenderer( {antialias:true} );
-	renderer.setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
-	container = document.getElementById( 'ThreeJS' );
-	container.appendChild( renderer.domElement );
-	// EVENTS
-	// CONTROLS
-	controls = new THREE.OrbitControls( camera, renderer.domElement );
-	// STATS
-	// LIGHT
-	var light = new THREE.PointLight(0xffffff);
-	light.position.set(0,250,0);
-	scene.add(light);
-	// FLOOR
-	var floorTexture = new THREE.ImageUtils.loadTexture( 'images/checkerboard.jpg' );
-	floorTexture.wrapS = floorTexture.wrapT = THREE.RepeatWrapping; 
-	floorTexture.repeat.set( 10, 10 );
-	var floorMaterial = new THREE.MeshBasicMaterial( { map: floorTexture, side: THREE.DoubleSide } );
-	var floorGeometry = new THREE.PlaneGeometry(1000, 1000, 10, 10);
-	var floor = new THREE.Mesh(floorGeometry, floorMaterial);
-	floor.position.y = -0.5;
-	floor.rotation.x = Math.PI / 2;
-	scene.add(floor);
-	// SKYBOX/FOG
-	var skyBoxGeometry = new THREE.CubeGeometry( 10000, 10000, 10000 );
-	var skyBoxMaterial = new THREE.MeshBasicMaterial( { color: 0x9999ff, side: THREE.BackSide } );
-	var skyBox = new THREE.Mesh( skyBoxGeometry, skyBoxMaterial );
-	// scene.add(skyBox);
-	scene.fog = new THREE.FogExp2( 0x9999ff, 0.00025 );
-	
-	////////////
-	// CUSTOM //
-	////////////
-	var cubeGeometry = new THREE.CubeGeometry( 50, 50, 50 );
-	
-	
-	var cubeMaterial1 = new THREE.MeshBasicMaterial( { color: 0xccccdd, side: THREE.DoubleSide, depthTest: true, polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1 } );
-	
-	var dashMaterial = new THREE.LineDashedMaterial( { color: 0xff0000, dashSize: 1, gapSize: 0.5, depthTest: false, polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1  } );
-	
-	cube = new THREE.Mesh( cubeGeometry.clone(), cubeMaterial1 );
-	cube.position.set(0,26,0);
-	scene.add(cube);
-	
-	cube = new THREE.Line( geo2line(new THREE.CubeGeometry( 50, 50, 50 )), dashMaterial, THREE.LinePieces );
-	cube.position.set(0,26,0);
-	scene.add(cube);
-}
+				cameraPersp = new THREE.PerspectiveCamera( 50, aspect, 0.01, 30000 );
+				cameraOrtho = new THREE.OrthographicCamera( - 600 * aspect, 600 * aspect, 600, - 600, 0.01, 30000 );
+				currentCamera = cameraPersp;
 
-function animate() 
-{
-    requestAnimationFrame( animate );
-	render();		
-	update();
-}
+				currentCamera.position.set( 1000, 500, 1000 );
+				currentCamera.lookAt( 0, 200, 0 );
 
-function update()
-{
-	
-	controls.update();
-	stats.update();
-}
+				scene = new THREE.Scene();
+				scene.add( new THREE.GridHelper( 1000, 10 ) );
 
-function render() 
-{
-	renderer.render( scene, camera );
-}
+				var light = new THREE.DirectionalLight( 0xffffff, 2 );
+				light.position.set( 1, 1, 1 );
+				scene.add( light );
 
-function geo2line( geo ) // credit to WestLangley!
-{
-    var geometry = new THREE.Geometry();
-    var vertices = geometry.vertices;
-	
-	for ( i = 0; i < geo.faces.length; i++ ) 
-	{
-        var face = geo.faces[ i ];
-        if ( face instanceof THREE.Face3 ) 
-		{
-            var a = geo.vertices[ face.a ].clone();
-			var b = geo.vertices[ face.b ].clone();
-			var c = geo.vertices[ face.c ].clone();
-            vertices.push( a,b, b,c, c,a );
-        } 
-		else if ( face instanceof THREE.Face4 ) 
-		{
-			var a = geo.vertices[ face.a ].clone();
-			var b = geo.vertices[ face.b ].clone();
-			var c = geo.vertices[ face.c ].clone();
-			var d = geo.vertices[ face.d ].clone();
-            vertices.push( a,b, b,c, c,d, d,a );
-        }
-    }
+				var texture = new THREE.TextureLoader().load( '/img/1.png', render );
+				texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
 
-    geometry.computeLineDistances();
-    return geometry;
-}
-</script>
+				var geometry = new THREE.BoxBufferGeometry( 200, 200, 200 );
+				var material = new THREE.MeshLambertMaterial( { map: texture, transparent: true } );
 
-</body>
+				orbit = new OrbitControls( currentCamera, renderer.domElement );
+				orbit.update();
+				orbit.addEventListener( 'change', render );
+
+				control = new TransformControls( currentCamera, renderer.domElement );
+				control.addEventListener( 'change', render );
+
+				control.addEventListener( 'dragging-changed', function ( event ) {
+
+					orbit.enabled = ! event.value;
+
+				} );
+
+				var mesh = new THREE.Mesh( geometry, material );
+				scene.add( mesh );
+
+				control.attach( mesh );
+				scene.add( control );
+				window.addEventListener( 'keydown', function ( event ) {
+
+					switch ( event.keyCode ) {
+
+						case 87: // W
+							control.setMode( "translate" );
+							break;
+
+						case 69: // E
+							control.setMode( "rotate" );
+							break;
+
+						case 82: // R
+							control.setMode( "scale" );
+							break;
+
+					}
+
+				} );
+
+				window.addEventListener( 'keyup', function ( event ) {
+
+					switch ( event.keyCode ) {
+
+						case 16: // Shift
+							control.setTranslationSnap( null );
+							control.setRotationSnap( null );
+							control.setScaleSnap( null );
+							break;
+
+					}
+
+				} );
+
+			}
+
+			function onWindowResize() {
+
+				const aspect = window.innerWidth / window.innerHeight;
+
+				cameraPersp.aspect = aspect;
+				cameraPersp.updateProjectionMatrix();
+
+				cameraOrtho.left = cameraOrtho.bottom * aspect;
+				cameraOrtho.right = cameraOrtho.top * aspect;
+				cameraOrtho.updateProjectionMatrix();
+
+				renderer.setSize( window.innerWidth, window.innerHeight );
+
+				render();
+
+			}
+
+			function render() {
+				console.log(1);
+				renderer.render( scene, currentCamera );
+
+			}
+
+		</script>
+
+	</body>
 </html>
