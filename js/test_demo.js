@@ -13,7 +13,7 @@ var Material;
 var BoxGeometry = new THREE.BoxGeometry(50, 50, 50, 40, 40, 40);
 var SphereGeometry = new THREE.SphereGeometry(30, 60, 60);
 var ConeGeometry = new THREE.ConeGeometry(20, 60, 50, 20);
-var CylinderGeometry = new THREE.CylinderGeometry(20, 20, 40, 250, 30);
+var CylinderGeometry = new THREE.CylinderGeometry(20, 20, 40, 50, 30);
 var TorusGeometry = new THREE.TorusGeometry(20, 5, 20, 100);
 var TeapotGeometry = new TeapotBufferGeometry(20, 8);
 var FOV, Far, Near;
@@ -89,6 +89,27 @@ function SetMaterial(x) {
 	AddGeo(d_id);
 }
 window.SetMaterial = SetMaterial;
+
+function setFOV(value)
+{
+	currentCamera.fov = Number(value);
+	currentCamera.updateProjectionMatrix();
+}
+window.setFOV = setFOV;
+
+function setFar(value)
+{
+	currentCamera.far = Number(value);
+	currentCamera.updateProjectionMatrix();
+}
+window.setFar = setFar;
+
+function setNear(value)
+{
+	currentCamera.near = Number(value);
+	currentCamera.updateProjectionMatrix();
+}
+window.setNear = setNear;
 
 function AddGeo(id) {
 	// console.log(type);
