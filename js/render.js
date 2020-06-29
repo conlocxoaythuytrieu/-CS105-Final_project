@@ -57,6 +57,7 @@ function init() {
 		currentCamera.updateProjectionMatrix();
 
 		renderer.setSize(WIDTH, HEIGHT);
+		render();
 	});
 
 	// var light = new THREE.DirectionalLight(0xffffff, 2);
