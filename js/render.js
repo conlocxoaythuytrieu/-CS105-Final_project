@@ -9,6 +9,9 @@ import {
 import {
 	TeapotBufferGeometry
 } from '../js/TeapotBufferGeometry.js';
+import {
+	Projector
+} from '../js/Projector.js';
 
 var cameraPersp, cameraOrtho, currentCamera;
 var scene, renderer, control, orbit;
@@ -177,7 +180,22 @@ function AddGeo(id) {
 	// geo.rotation.x += 0.01; // animation
 
 	scene.add(geo);
+	xx(geo);
+	render();
+}
+		
+document.addEventListener( 'mousedown', onMouseDown );
+var mouse = new THREE.Vector2()
+function onMouseDown(event) {
+	event.preventDefault();
+	event.preventDefault();
+	mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+	mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+	console.log(mouse);
+}
 
+function xx(geo)
+{
 	control.attach(geo);
 	scene.add(control);
 	window.addEventListener('keydown', function (event) {
@@ -193,9 +211,8 @@ function AddGeo(id) {
 				break;
 		}
 	});
-
-	render();
 }
+
 window.AddGeo = AddGeo;
 
 function render() {
