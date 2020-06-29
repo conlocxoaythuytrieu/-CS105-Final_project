@@ -1,54 +1,50 @@
-var scene, camera, renderer;
-var geo = new THREE.Mesh();
+import * as THREE from '../js/three.module.js';
 
+import {
+	OrbitControls
+} from '../js/OrbitControls.js';
+import {
+	TransformControls
+} from '../js/TransformControls.js';
+import {
+	TeapotBufferGeometry
+} from '../js/TeapotBufferGeometry.js';
+
+var cameraPersp, cameraOrtho, currentCamera;
+var scene, renderer, control, orbit;
+var geo = new THREE.Mesh();
+var Material;
 var BoxGeometry = new THREE.BoxGeometry(50, 50, 50, 40, 40, 40);
 var SphereGeometry = new THREE.SphereGeometry(30, 60, 60);
 var ConeGeometry = new THREE.ConeGeometry(20, 60, 50, 20);
-var CylinderGeometry = new THREE.CylinderGeometry(20, 20, 40, 300);
+var CylinderGeometry = new THREE.CylinderGeometry(20, 20, 40, 50, 30);
 var TorusGeometry = new THREE.TorusGeometry(20, 5, 20, 100);
-var TeapotGeometry = new THREE.TeapotBufferGeometry(20, 8);
-var Material;
-var FOV, Far, Near;
+var TeapotGeometry = new TeapotBufferGeometry(20, 8);
 
-var setFOV = function(value)
-{
-	camera.fov = Number(value);
-	camera.updateProjectionMatrix();
-}
+init();
+render();
 
-var setFar = function(value)
-{
-	camera.far = Number(value);
-	camera.updateProjectionMatrix();
-}
-
-var setNear = function(value)
-{
-	camera.near = Number(value);
-	camera.updateProjectionMatrix();
-}
-
-var init = function () {
+function init() {
 	// Scene
 	scene = new THREE.Scene();
 	scene.background = new THREE.Color(0x343a40);
 
 	// Grid
-	var gridHelper = new THREE.GridHelper(400, 50, 0xffffff, 0xffffff);
-	scene.add(gridHelper);
+	scene.add(new THREE.GridHelper(400, 50, 0xA3BAC3, 0xA3BAC3));
 
 	// Coordinate axes
-	var axesHelper = new THREE.AxesHelper(100);
-	scene.add(axesHelper);
+	scene.add(new THREE.AxesHelper(100));
 
 	// Camera
-	camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 10000);
-	camera.position.set(1, 50, 100);
-	// console.log("camera position: ", camera.position);
-	camera.lookAt(new THREE.Vector3(0, 0, 0));
+	const aspect = window.innerWidth / window.innerHeight;
+	cameraPersp = new THREE.PerspectiveCamera(75, aspect, 0.01, 2000);
+	// cameraOrtho = new THREE.OrthographicCamera(-600 * aspect, 600 * aspect, 600, -600, 0.01, 30000);
+	currentCamera = cameraPersp;
+	currentCamera.position.set(1, 50, 100);
+	currentCamera.lookAt(0, 0, 0);
 
-	//
 	renderer = new THREE.WebGLRenderer();
+	renderer.setPixelRatio(window.devicePixelRatio);
 	renderer.setSize(window.innerWidth, window.innerHeight);
 	document.getElementById("rendering").appendChild(renderer.domElement);
 
@@ -57,26 +53,38 @@ var init = function () {
 		var WIDTH = window.innerWidth;
 		var HEIGHT = window.innerHeight;
 
-		camera.aspect = WIDTH / HEIGHT;
-		camera.updateProjectionMatrix();
+		currentCamera.aspect = WIDTH / HEIGHT;
+		currentCamera.updateProjectionMatrix();
 
 		renderer.setSize(WIDTH, HEIGHT);
 	});
 
-	controls = new THREE.OrbitControls(camera, renderer.domElement);
-	GameLoop();
+	// var light = new THREE.DirectionalLight(0xffffff, 2);
+	// light.position.set(1, 1, 1);
+	// scene.add(light);
+
+	// var texture = new THREE.TextureLoader().load('/img/1.png', render);
+	// texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+
+	// var material = new THREE.MeshLambertMaterial({ map: texture, transparent: true });
+
+	orbit = new OrbitControls(currentCamera, renderer.domElement);
+	orbit.update();
+	orbit.addEventListener('change', render);
+
+	control = new TransformControls(currentCamera, renderer.domElement);
+	control.addEventListener('change', render);
+
+	control.addEventListener('dragging-changed', function (event) {
+		orbit.enabled = !event.value;
+	});
+
 }
-
-// var directionalLight = new THREE.DirectionalLight(0xffffff, 1.2);
-// directionalLight.position.set(0, 5, 0);
-// scene.add(directionalLight)
-
-// scene.fog = new THREE.Fog(0x999999, 0, 20000);
-// renderer.setClearColor(scene.fog.color, 1);
 
 var type = 3,
 	d_id;
-var SetMaterial = function (x) {
+
+function SetMaterial(x) {
 	type = x;
 	switch (type) {
 		case 1:
@@ -99,10 +107,30 @@ var SetMaterial = function (x) {
 	}
 	AddGeo(d_id);
 }
+window.SetMaterial = SetMaterial;
 
-var AddGeo = function (id) {
-	// console.log(type);
-	controls.update();
+function setFOV(value) {
+	currentCamera.fov = Number(value);
+	currentCamera.updateProjectionMatrix();
+	render();
+}
+window.setFOV = setFOV;
+
+function setFar(value) {
+	currentCamera.far = Number(value);
+	currentCamera.updateProjectionMatrix();
+	render();
+}
+window.setFar = setFar;
+
+function setNear(value) {
+	currentCamera.near = Number(value);
+	currentCamera.updateProjectionMatrix();
+	render();
+}
+window.setNear = setNear;
+
+function AddGeo(id) {
 	if (id > 0 && id < 7) {
 		d_id = id;
 		scene.remove(geo);
@@ -145,21 +173,30 @@ var AddGeo = function (id) {
 				geo = new THREE.Mesh(TeapotGeometry, Material);
 			break;
 	}
-
 	// geo.rotation.x += 0.01; // animation
-	
-	var box = new THREE.Box3().setFromObject( geo );
-	geo.position.y-=box.min['y'];
+
 	scene.add(geo);
-	renderer.render(scene, camera);
-	requestAnimationFrame(AddGeo);
+
+	control.attach(geo);
+	scene.add(control);
+	window.addEventListener('keydown', function (event) {
+		switch (event.keyCode) {
+			case 87: // W
+				control.setMode("translate");
+				break;
+			case 69: // E
+				control.setMode("rotate");
+				break;
+			case 82: // R
+				control.setMode("scale");
+				break;
+		}
+	});
+
+	render();
 }
+window.AddGeo = AddGeo;
 
-// run game loop (update, render, repeat)
-var GameLoop = function () {
-	controls.update();
-	renderer.render(scene, camera);
-	requestAnimationFrame(GameLoop);
-};
-
-init();
+function render() {
+	renderer.render(scene, currentCamera);
+}
