@@ -1,6 +1,6 @@
 var scene, camera, renderer;
 var geo = new THREE.Mesh();
-// CUBE
+
 var BoxGeometry = new THREE.BoxGeometry(50, 50, 50, 40, 40, 40);
 var SphereGeometry = new THREE.SphereGeometry(30, 60, 60);
 var ConeGeometry = new THREE.ConeGeometry(20, 60, 50, 20);
@@ -8,6 +8,25 @@ var CylinderGeometry = new THREE.CylinderGeometry(20, 20, 40, 300);
 var TorusGeometry = new THREE.TorusGeometry(20, 5, 20, 100);
 var TeapotGeometry = new THREE.TeapotBufferGeometry(20, 8);
 var Material;
+var FOV, Far, Near;
+
+var setFOV = function(value)
+{
+	camera.fov = Number(value);
+	camera.updateProjectionMatrix();
+}
+
+var setFar = function(value)
+{
+	camera.far = Number(value);
+	camera.updateProjectionMatrix();
+}
+
+var setNear = function(value)
+{
+	camera.near = Number(value);
+	camera.updateProjectionMatrix();
+}
 
 var init = function () {
 	// Scene
