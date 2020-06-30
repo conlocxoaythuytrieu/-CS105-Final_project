@@ -11,7 +11,7 @@ import {
 } from '../js/TeapotBufferGeometry.js';
 
 var cameraPersp, cameraOrtho, currentCamera;
-var scene, renderer, control, orbit, mesh, raycaster, light;
+var scene, renderer, control, orbit, mesh, raycaster, light, PointLightHelper;
 var Material = new THREE.MeshBasicMaterial({
 	color: '#F5F5F5',
 });
@@ -104,7 +104,7 @@ function CloneMesh(dummy_mesh) {
 function SetMaterial(material_id) {
 	mesh = scene.getObjectByName("mesh1");
 	light = scene.getObjectByName("pl1");
-	console.log(light);
+	console.log("M", light);
 
 	type = material_id;
 
@@ -146,24 +146,22 @@ function SetMaterial(material_id) {
 
 				mesh = new THREE.Mesh(dummy_mesh.geometry, Material);
 				CloneMesh(dummy_mesh);
-				type = 0;
 
 				break;
 			case 4:
 				if (!light)
-					Martial = new THREE.MeshBasicMaterial({
+					Material = new THREE.MeshBasicMaterial({
 						map: texture,
 						transparent: true
 					});
 				else
-					Martial = new THREE.MeshLambertMaterial({
+					Material = new THREE.MeshLambertMaterial({
 						map: texture,
 						transparent: true
 					});
 
-				mesh = new THREE.Mesh(dummy_mesh.geometry, Martial);
+				mesh = new THREE.Mesh(dummy_mesh.geometry, Material);
 				CloneMesh(dummy_mesh);
-				type = 1;
 
 				break;
 		}
@@ -173,7 +171,7 @@ function SetMaterial(material_id) {
 }
 window.SetMaterial = SetMaterial;
 
-function AddGeo(mesh_id, position = null) {
+function AddGeo(mesh_id) {
 	mesh = scene.getObjectByName("mesh1");
 	scene.remove(mesh);
 
@@ -261,24 +259,23 @@ function EventScale() {
 window.EventScale = EventScale;
 
 function SetPointLight() {
-	RemovePointLight();
+	// RemovePointLight();
 	light = scene.getObjectByName("pl1");
-	console.
 
 	if (!light) {
 		const color = '#FFFFFF';
 		const intensity = 2;
 		light = new THREE.PointLight(color, intensity);
 		light.position.set(0, 70, 0);
-		light.name = "pl1"
+		light.name = "pl1";
 		scene.add(light);
 		control_transform(light);
 		if (type == 3 || type == 4) {
 			SetMaterial(type);
 		}
 
-		const PointLightHelper = new THREE.PointLightHelper(light);
-		PointLightHelper.name = "plh1"
+		PointLightHelper = new THREE.PointLightHelper(light);
+		PointLightHelper.name = "plh1";
 		scene.add(PointLightHelper);
 		render();
 	}
@@ -286,13 +283,15 @@ function SetPointLight() {
 window.SetPointLight = SetPointLight;
 
 function RemovePointLight() {
-	light = scene.getObjectByName("pl1");
-	const lightHelper = scene.getObjectByName("plh1");
+	// light = scene.getObjectByName("pl1");
+	// const lightHelper = scene.getObjectByName("plh1");
 	scene.remove(light);
+	scene.remove(PointLightHelper);
+
 	if (type == 3 || type == 4) {
 		SetMaterial(type);
 	}
-	scene.remove(lightHelper);
+
 	render();
 }
 window.RemovePointLight = RemovePointLight;
