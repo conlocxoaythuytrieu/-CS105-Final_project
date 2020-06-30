@@ -14,7 +14,7 @@ import {
 } from '../js/Projector.js';
 
 var cameraPersp, cameraOrtho, currentCamera;
-var scene, renderer, control, orbit, raycaster, light;
+var scene, renderer, control, orbit, raycaster, light, helper;
 var type = 3, d_id = null, light = 0;
 var geo;
 var Material = new THREE.MeshBasicMaterial({
@@ -252,12 +252,12 @@ function EventScale() {
 }
 window.EventScale = EventScale;
 function SetPointLight() {
+	RemovePointLight();
 	check_light = 1;
 	if (type == 3 || type == 4)
 	{
 		SetMaterial(type);
 	}
-	else return;
 	let color = '#FFFFFF';
 	let intensity = 2;
 	light = new THREE.PointLight(color, intensity);
@@ -265,20 +265,21 @@ function SetPointLight() {
 	scene.add(light);
 	control_transform(light);
 
-	const helper = new THREE.PointLightHelper(light);
+	helper = new THREE.PointLightHelper(light);
 	scene.add(helper);
 	render();
 }
 window.SetPointLight = SetPointLight;
 
 function RemovePointLight() {
-	// check_light = 0;
-	// if (type == 3 || type == 4)
-	// {
-	// 	SetMaterial(type);
-	// }
-	// else return;
-// 	scene.remove(light);
+	check_light = 0;
+	if (type == 3 || type == 4)
+	{
+		SetMaterial(type);
+	}
+	scene.remove(light);
+	scene.remove(helper);
+	render();
 }
 window.RemovePointLight = RemovePointLight;
 
@@ -316,5 +317,5 @@ function onDocumentMouseDown(event) {
 
 function render() {
 	renderer.render(scene, currentCamera);
-	// console.log(scene.children)
+	console.log(scene.children)
 }
