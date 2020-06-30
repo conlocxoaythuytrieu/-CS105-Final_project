@@ -16,7 +16,9 @@ import {
 var cameraPersp, cameraOrtho, currentCamera;
 var scene, renderer, control, orbit;
 var geo;
-var Material;
+var Material = new THREE.MeshPhongMaterial({
+	color: 0xffffff,
+});;
 var BoxGeometry = new THREE.BoxGeometry(50, 50, 50, 40, 40, 40);
 var SphereGeometry = new THREE.SphereGeometry(30, 60, 60);
 var ConeGeometry = new THREE.ConeGeometry(20, 60, 50, 20);
@@ -107,7 +109,7 @@ function SetMaterial(x) {
 			});
 			break;
 		case 3:
-			Material = new THREE.MeshBasicMaterial({
+			Material = new THREE.MeshPhongMaterial({
 				color: 0xffffff,
 			});
 			break;
