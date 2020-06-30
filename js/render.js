@@ -15,7 +15,7 @@ import {
 
 var cameraPersp, cameraOrtho, currentCamera;
 var scene, renderer, control, orbit;
-var geo = new THREE.Mesh();
+var geo;
 var Material;
 var BoxGeometry = new THREE.BoxGeometry(50, 50, 50, 40, 40, 40);
 var SphereGeometry = new THREE.SphereGeometry(30, 60, 60);
@@ -109,7 +109,7 @@ function SetMaterial(x) {
 			});
 			break;
 	}
-	AddGeo(d_id);
+	AddGeo(d_id, geo.position);
 }
 window.SetMaterial = SetMaterial;
 
@@ -134,7 +134,7 @@ function setNear(value) {
 }
 window.setNear = setNear;
 
-function AddGeo(id) {
+function AddGeo(id, position = null) {
 	if (id > 0 && id < 7) {
 		d_id = id;
 		scene.remove(geo);
@@ -178,23 +178,15 @@ function AddGeo(id) {
 			break;
 	}
 	// geo.rotation.x += 0.01; // animation
-
+	if (position!=null)
+		geo.position.set(position['x'], position['y'], position['z']);
+	console.log(position);
 	scene.add(geo);
-	xx(geo);
+	control_transform(geo);
 	render();
 }
-		
-document.addEventListener( 'mousedown', onMouseDown );
-var mouse = new THREE.Vector2()
-function onMouseDown(event) {
-	event.preventDefault();
-	event.preventDefault();
-	mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
-	mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
-	console.log(mouse);
-}
 
-function xx(geo)
+function control_transform(geo)
 {
 	control.attach(geo);
 	scene.add(control);
