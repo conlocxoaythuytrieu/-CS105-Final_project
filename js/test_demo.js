@@ -137,11 +137,11 @@ function SetMaterial(material_id) {
 			case 3:
 				if (!light)
 					Material = new THREE.MeshBasicMaterial({
-						color: '#FF00FF',
+						color: '#FFFFFF',
 					});
 				else
 					Material = new THREE.MeshPhongMaterial({
-						color: '#FF00FF',
+						color: '#FFFFFF',
 					});
 
 				mesh = new THREE.Mesh(dummy_mesh.geometry, Material);
@@ -263,6 +263,7 @@ window.EventScale = EventScale;
 function SetPointLight() {
 	RemovePointLight();
 	light = scene.getObjectByName("pl1");
+	console.
 
 	if (!light) {
 		const color = '#FFFFFF';
@@ -288,6 +289,9 @@ function RemovePointLight() {
 	light = scene.getObjectByName("pl1");
 	const lightHelper = scene.getObjectByName("plh1");
 	scene.remove(light);
+	if (type == 3 || type == 4) {
+		SetMaterial(type);
+	}
 	scene.remove(lightHelper);
 	render();
 }
