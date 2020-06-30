@@ -27,21 +27,23 @@ render();
 function init() {
 	// Scene
 	scene = new THREE.Scene();
-	scene.background = new THREE.Color(0x343a40);
+	scene.background = new THREE.Color('#343a40');
 
 	// Grid
-	scene.add(new THREE.GridHelper(400, 50, 0xA3BAC3, 0xA3BAC3));
+	scene.add(new THREE.GridHelper(400, 50, '#A3BAC3', '#A3BAC3'));
 
 	// Coordinate axes
 	scene.add(new THREE.AxesHelper(100));
 
 	// Camera
-	const aspect = window.innerWidth / window.innerHeight;
-	cameraPersp = new THREE.PerspectiveCamera(75, aspect, 0.01, 2000);
-	// cameraOrtho = new THREE.OrthographicCamera(-600 * aspect, 600 * aspect, 600, -600, 0.01, 30000);
-	currentCamera = cameraPersp;
-	currentCamera.position.set(1, 50, 100);
-	currentCamera.lookAt(0, 0, 0);
+	{
+		const aspect = window.innerWidth / window.innerHeight;
+		cameraPersp = new THREE.PerspectiveCamera(75, aspect, 0.01, 2000);
+		// cameraOrtho = new THREE.OrthographicCamera(-600 * aspect, 600 * aspect, 600, -600, 0.01, 30000);
+		currentCamera = cameraPersp;
+		currentCamera.position.set(1, 50, 100);
+		currentCamera.lookAt(0, 0, 0);
+	}
 
 	renderer = new THREE.WebGLRenderer();
 	renderer.setPixelRatio(window.devicePixelRatio);
@@ -50,8 +52,8 @@ function init() {
 
 	// check when the browser size has changed and adjust the camera accordingly
 	window.addEventListener('resize', function () {
-		var WIDTH = window.innerWidth;
-		var HEIGHT = window.innerHeight;
+		const WIDTH = window.innerWidth;
+		const HEIGHT = window.innerHeight;
 
 		currentCamera.aspect = WIDTH / HEIGHT;
 		currentCamera.updateProjectionMatrix();
@@ -59,10 +61,6 @@ function init() {
 		renderer.setSize(WIDTH, HEIGHT);
 		render();
 	});
-
-	// var light = new THREE.DirectionalLight(0xffffff, 2);
-	// light.position.set(1, 1, 1);
-	// scene.add(light);
 
 	// var texture = new THREE.TextureLoader().load('/img/1.png', render);
 	// texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
@@ -93,6 +91,8 @@ function init() {
 				break;
 		}
 	});
+
+	SetPointLight();
 }
 
 var type = 3,
@@ -103,19 +103,20 @@ function SetMaterial(x) {
 	switch (type) {
 		case 1:
 			Material = new THREE.PointsMaterial({
-				color: 0xffffff,
-				size: 0.2,
+				color: '#FFFFFF',
+				sizeAttenuation: false,
+				size: 1,
 			});
 			break;
 		case 2:
 			Material = new THREE.MeshBasicMaterial({
-				color: 0xffffff,
+				color: '#FFFFFF',
 				wireframe: true,
 			});
 			break;
 		case 3:
-			Material = new THREE.MeshBasicMaterial({
-				color: 0xffffff,
+			Material = new THREE.MeshPhongMaterial({
+				color: '#8AC',
 			});
 			break;
 	}
@@ -187,8 +188,10 @@ function AddGeo(id) {
 				geo = new THREE.Mesh(TeapotGeometry, Material);
 			break;
 	}
-	// geo.rotation.x += 0.01; // animation
 
+	// geo.rotation.x += 0.01; // animation
+	// var box = new THREE.BoxHelper(geo, 0xffff00);
+	// scene.add(box);
 	scene.add(geo);
 
 	control.attach(geo);
@@ -211,6 +214,17 @@ function EventScale() {
 	control.setMode("scale");
 }
 window.EventScale = EventScale;
+
+function SetPointLight() {
+	console.log("a")
+	let color = '#FFFFFF';
+	let intensity = 1;
+	let light = new THREE.PointLight(color, intensity);
+	light.position.set(0, 10, 0);
+	scene.add(light);
+	const helper = new THREE.PointLightHelper(light);
+	scene.add(helper);
+}
 
 function render() {
 	renderer.render(scene, currentCamera);
