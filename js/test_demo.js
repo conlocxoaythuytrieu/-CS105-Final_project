@@ -9,9 +9,6 @@ import {
 import {
 	TeapotBufferGeometry
 } from '../js/TeapotBufferGeometry.js';
-import {
-	Projector
-} from '../js/Projector.js';
 
 var cameraPersp, cameraOrtho, currentCamera;
 var scene, renderer, control, orbit;
@@ -42,7 +39,7 @@ function init() {
 	scene.add(new THREE.GridHelper(400, 50, '#A3BAC3', '#A3BAC3'));
 
 	// Coordinate axes
-	scene.add(new THREE.AxesHelper(100));
+	// scene.add(new THREE.AxesHelper(100));
 
 	// Camera
 	{
@@ -86,10 +83,9 @@ function init() {
 		orbit.enabled = !event.value;
 	});
 
-	SetPointLight();
+	// SetPointLight();
 }
-var type = 3,
-	d_id = null,
+var d_id = null,
 	light = 0;
 
 function setTexture(url) {
@@ -100,33 +96,42 @@ function setTexture(url) {
 }
 window.setTexture = setTexture;
 
+function CloneMesh(dummy_mesh) {
+	mesh.name = dummy_mesh.name;
+	mesh.position.set(dummy_mesh.position.x, dummy_mesh.position.y, dummy_mesh.position.z);
+	mesh.rotation.set(dummy_mesh.rotation._x, dummy_mesh.rotation._y, dummy_mesh.rotation._z);
+	mesh.scale.set(dummy_mesh.scale.x, dummy_mesh.scale.y, dummy_mesh.scale.z);
+	scene.add(mesh);
+	control_transform(mesh);
+}
+
 function SetMaterial(material_id) {
 	mesh = scene.getObjectByName("mesh1");
 	if (mesh) {
-		console.log(mesh);
+		const dummy_mesh = mesh.clone();
+		scene.remove(mesh);
+
 		switch (material_id) {
 			case 1:
 				Material = new THREE.PointsMaterial({
-					color: '#FFFFFF',
+					color: '#F5F5F5',
 					sizeAttenuation: false,
 					size: 1,
 				});
 
-				const dummy_mesh = mesh.clone();
 				mesh = new THREE.Points(dummy_mesh.geometry, Material);
-				mesh.name = dummy_mesh.name;
-				mesh.set
-				scene.add(mesh);
-				control_transform(mesh);
-				console.log("point", mesh);
+				CloneMesh(dummy_mesh);
+
 				break;
 			case 2:
-				console.log('1111');
 				Material = new THREE.MeshBasicMaterial({
-					color: '#FFFFFF',
+					color: '#F5F5F5',
 					wireframe: true,
 				});
-				console.log("line", mesh);
+
+				mesh = new THREE.Mesh(dummy_mesh.geometry, Material);
+				CloneMesh(dummy_mesh);
+
 				break;
 			case 3:
 				if (light == 0)
@@ -137,7 +142,10 @@ function SetMaterial(material_id) {
 					Material = new THREE.MeshPhongMaterial({
 						color: '#FF00FF',
 					});
-				console.log("solid", mesh);
+
+				mesh = new THREE.Mesh(dummy_mesh.geometry, Material);
+				CloneMesh(dummy_mesh);
+
 				break;
 			case 4:
 				if (light == 0)
@@ -155,8 +163,6 @@ function SetMaterial(material_id) {
 		}
 
 		mesh.material = Material;
-		// AddGeo(d_id, geo.position);
-		// control_transform(mesh);
 		render();
 	}
 }
@@ -168,46 +174,29 @@ function AddGeo(mesh_id, position = null) {
 
 	switch (mesh_id) {
 		case 1:
-			if (type == 1)
-				mesh = new THREE.Points(BoxGeometry, Material);
-			else
-				mesh = new THREE.Mesh(BoxGeometry, Material);
+			mesh = new THREE.Mesh(BoxGeometry, Material);
 			break;
 		case 2:
-			if (type == 1)
-				mesh = new THREE.Points(SphereGeometry, Material);
-			else
-				mesh = new THREE.Mesh(SphereGeometry, Material);
+			mesh = new THREE.Mesh(SphereGeometry, Material);
 			break;
 		case 3:
-			if (type == 1)
-				mesh = new THREE.Points(ConeGeometry, Material);
-			else
-				mesh = new THREE.Mesh(ConeGeometry, Material);
+			mesh = new THREE.Mesh(ConeGeometry, Material);
 			break;
 		case 4:
-			if (type == 1)
-				mesh = new THREE.Points(CylinderGeometry, Material);
-			else
-				mesh = new THREE.Mesh(CylinderGeometry, Material);
+			mesh = new THREE.Mesh(CylinderGeometry, Material);
 			break;
 		case 5:
-			if (type == 1)
-				mesh = new THREE.Points(TorusGeometry, Material);
-			else
-				mesh = new THREE.Mesh(TorusGeometry, Material);
+			mesh = new THREE.Mesh(TorusGeometry, Material);
 			break;
 		case 6:
-			if (type == 1)
-				mesh = new THREE.Points(TeapotGeometry, Material);
-			else
-				mesh = new THREE.Mesh(TeapotGeometry, Material);
+			mesh = new THREE.Mesh(TeapotGeometry, Material);
 			break;
 	}
 	mesh.name = "mesh1";
 
 	scene.add(mesh);
 	control_transform(mesh);
+	console.log(scene.children);
 
 	render();
 }
@@ -279,5 +268,5 @@ function SetPointLight() {
 
 function render() {
 	renderer.render(scene, currentCamera);
-	// console.log(scene.children)
+	// console.log(scene.children);
 }
