@@ -9,39 +9,37 @@ import {
 import {
 	TeapotBufferGeometry
 } from '../js/TeapotBufferGeometry.js';
-import {
-	Projector
-} from '../js/Projector.js';
 
 var cameraPersp, cameraOrtho, currentCamera;
-var scene, renderer, control, orbit, raycaster, light, helper;
-var type = 3, d_id = null, check_light = 0;
-var geo;
+var scene, renderer, control, orbit, mesh, raycaster, light, PointLightHelper;
 var Material = new THREE.MeshBasicMaterial({
-	color: '#FFFFFF',
+	color: '#F5F5F5',
 });
-var mouse = new THREE.Vector2(),
-	INTERSECTED;
+Material.needsUpdate = true;
+var texture;
+var mouse = new THREE.Vector2();
+var type = 3;
+
 var BoxGeometry = new THREE.BoxGeometry(50, 50, 50, 20, 20, 20);
 var SphereGeometry = new THREE.SphereGeometry(30, 60, 60);
 var ConeGeometry = new THREE.ConeGeometry(20, 60, 50, 20);
 var CylinderGeometry = new THREE.CylinderGeometry(20, 20, 40, 50, 20);
 var TorusGeometry = new THREE.TorusGeometry(20, 5, 20, 100);
 var TeapotGeometry = new TeapotBufferGeometry(20, 8);
-var texture;
+
 init();
 render();
 
 function init() {
 	// Scene
 	scene = new THREE.Scene();
-	scene.background = new THREE.Color('#343a40');
+	scene.background = new THREE.Color('#343A40');
 
 	// Grid
 	scene.add(new THREE.GridHelper(400, 50, '#A3BAC3', '#A3BAC3'));
 
 	// Coordinate axes
-	scene.add(new THREE.AxesHelper(100));
+	// scene.add(new THREE.AxesHelper(100));
 
 	// Camera
 	{
@@ -53,10 +51,11 @@ function init() {
 		currentCamera.lookAt(0, 0, 0);
 	}
 
+	raycaster = new THREE.Raycaster();
+
 	renderer = new THREE.WebGLRenderer();
 	renderer.setPixelRatio(window.devicePixelRatio);
 	renderer.setSize(window.innerWidth, window.innerHeight);
-	raycaster = new THREE.Raycaster();
 	document.getElementById("rendering").appendChild(renderer.domElement);
 
 	// check when the browser size has changed and adjust the camera accordingly
@@ -71,10 +70,6 @@ function init() {
 		render();
 	});
 
-	// var light = new THREE.DirectionalLight('#FFFFFF', 2);
-	// light.position.set(1, 1, 1);
-	// scene.add(light);
-
 	orbit = new OrbitControls(currentCamera, renderer.domElement);
 	orbit.update();
 	orbit.addEventListener('change', render);
@@ -88,115 +83,129 @@ function init() {
 }
 
 function setTexture(url) {
-	if (d_id == null) return;
-	texture = new THREE.TextureLoader().load(url, render);
-	texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
-	SetMaterial(4);
+	mesh = scene.getObjectByName("mesh1");
+	if (mesh) {
+		texture = new THREE.TextureLoader().load(url, render);
+		texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+		SetMaterial(4);
+	}
 }
 window.setTexture = setTexture;
 
+function CloneMesh(dummy_mesh) {
+	mesh.name = dummy_mesh.name;
+	mesh.position.set(dummy_mesh.position.x, dummy_mesh.position.y, dummy_mesh.position.z);
+	mesh.rotation.set(dummy_mesh.rotation._x, dummy_mesh.rotation._y, dummy_mesh.rotation._z);
+	mesh.scale.set(dummy_mesh.scale.x, dummy_mesh.scale.y, dummy_mesh.scale.z);
+	scene.add(mesh);
+	control_transform(mesh);
+}
 
-function SetMaterial(x) {
-	if (d_id == null) return;
-	type = x;
-	switch (type) {
-		case 1:
-			Material = new THREE.PointsMaterial({
-				color: '#FFFFFF',
-				sizeAttenuation: false,
-				size: 1,
-			});
-			break;
-		case 2:
-			Material = new THREE.MeshBasicMaterial({
-				color: '#FFFFFF',
-				wireframe: true,
-			});
-			break;
-		case 3:
-			if (check_light == 0)
+function SetMaterial(material_id) {
+	mesh = scene.getObjectByName("mesh1");
+	light = scene.getObjectByName("pl1");
+	console.log("M", light);
+
+	type = material_id;
+
+	if (mesh) {
+		const dummy_mesh = mesh.clone();
+		scene.remove(mesh);
+
+		switch (material_id) {
+			case 1:
+				Material = new THREE.PointsMaterial({
+					color: '#F5F5F5',
+					sizeAttenuation: false,
+					size: 1,
+				});
+
+				mesh = new THREE.Points(dummy_mesh.geometry, Material);
+				CloneMesh(dummy_mesh);
+
+				break;
+			case 2:
 				Material = new THREE.MeshBasicMaterial({
-					color: '#FFFFFF',
+					color: '#F5F5F5',
+					wireframe: true,
 				});
-			else
-				Material = new THREE.MeshPhongMaterial({
-					color: '#FFFFFF',
-				});
-			break;
-		case 4:
-			if (check_light == 0)
-				Material = new THREE.MeshBasicMaterial({
-					map: texture,
-					transparent: true
-				});
-			else
-				Material = new THREE.MeshLambertMaterial({
-					map: texture,
-					transparent: true
-				});
-			break;
+
+				mesh = new THREE.Mesh(dummy_mesh.geometry, Material);
+				CloneMesh(dummy_mesh);
+
+				break;
+			case 3:
+				if (!light)
+					Material = new THREE.MeshBasicMaterial({
+						color: '#FFFFFF',
+					});
+				else
+					Material = new THREE.MeshPhongMaterial({
+						color: '#FFFFFF',
+					});
+
+				mesh = new THREE.Mesh(dummy_mesh.geometry, Material);
+				CloneMesh(dummy_mesh);
+
+				break;
+			case 4:
+				if (!light)
+					Material = new THREE.MeshBasicMaterial({
+						map: texture,
+						transparent: true
+					});
+				else
+					Material = new THREE.MeshLambertMaterial({
+						map: texture,
+						transparent: true
+					});
+
+				mesh = new THREE.Mesh(dummy_mesh.geometry, Material);
+				CloneMesh(dummy_mesh);
+
+				break;
+		}
+
+		render();
 	}
-	AddGeo(d_id, geo.position);
 }
 window.SetMaterial = SetMaterial;
 
-function AddGeo(id, position = null) {
-	// console.log("type =", type)
-	if (id > 0 && id < 7) {
-		d_id = id;
-		scene.remove(geo);
-	}
-	// console.log("d_id = ", d_id)
-	switch (id) {
+function AddGeo(mesh_id) {
+	mesh = scene.getObjectByName("mesh1");
+	scene.remove(mesh);
+
+	switch (mesh_id) {
 		case 1:
-			if (type == 1)
-				geo = new THREE.Points(BoxGeometry, Material);
-			else
-				geo = new THREE.Mesh(BoxGeometry, Material);
+			mesh = new THREE.Mesh(BoxGeometry, Material);
 			break;
 		case 2:
-			if (type == 1)
-				geo = new THREE.Points(SphereGeometry, Material);
-			else
-				geo = new THREE.Mesh(SphereGeometry, Material);
+			mesh = new THREE.Mesh(SphereGeometry, Material);
 			break;
 		case 3:
-			if (type == 1)
-				geo = new THREE.Points(ConeGeometry, Material);
-			else
-				geo = new THREE.Mesh(ConeGeometry, Material);
+			mesh = new THREE.Mesh(ConeGeometry, Material);
 			break;
 		case 4:
-			if (type == 1)
-				geo = new THREE.Points(CylinderGeometry, Material);
-			else
-				geo = new THREE.Mesh(CylinderGeometry, Material);
+			mesh = new THREE.Mesh(CylinderGeometry, Material);
 			break;
 		case 5:
-			if (type == 1)
-				geo = new THREE.Points(TorusGeometry, Material);
-			else
-				geo = new THREE.Mesh(TorusGeometry, Material);
+			mesh = new THREE.Mesh(TorusGeometry, Material);
 			break;
 		case 6:
-			if (type == 1)
-				geo = new THREE.Points(TeapotGeometry, Material);
-			else
-				geo = new THREE.Mesh(TeapotGeometry, Material);
+			mesh = new THREE.Mesh(TeapotGeometry, Material);
 			break;
 	}
-	// geo.rotation.x += 0.01; // animation
-	if (position != null) {
-		geo.position.set(position['x'], position['y'], position['z']);
-	}
-	// console.log("position = ", position);
-	scene.add(geo);
+	mesh.name = "mesh1";
+
+	scene.add(mesh);
+	control_transform(mesh);
+
 	render();
 }
 window.AddGeo = AddGeo;
 
-function control_transform(geo) {
-	control.attach(geo);
+function control_transform(mesh) {
+	control.attach(mesh);
 	scene.add(control);
 	window.addEventListener('keydown', function (event) {
 		switch (event.keyCode) {
@@ -248,39 +257,46 @@ function EventScale() {
 	control.setMode("scale");
 }
 window.EventScale = EventScale;
-function SetPointLight() {
-	RemovePointLight();
-	check_light = 1;
-	if (type == 3 || type == 4)
-	{
-		SetMaterial(type);
-	}
-	let color = '#FFFFFF';
-	let intensity = 2;
-	light = new THREE.PointLight(color, intensity);
-	light.position.set(0, 70, 0);
-	scene.add(light);
-	control_transform(light);
 
-	helper = new THREE.PointLightHelper(light);
-	scene.add(helper);
-	render();
+function SetPointLight() {
+	// RemovePointLight();
+	light = scene.getObjectByName("pl1");
+
+	if (!light) {
+		const color = '#FFFFFF';
+		const intensity = 2;
+		light = new THREE.PointLight(color, intensity);
+		light.position.set(0, 70, 0);
+		light.name = "pl1";
+		scene.add(light);
+		control_transform(light);
+		if (type == 3 || type == 4) {
+			SetMaterial(type);
+		}
+
+		PointLightHelper = new THREE.PointLightHelper(light);
+		PointLightHelper.name = "plh1";
+		scene.add(PointLightHelper);
+		render();
+	}
 }
 window.SetPointLight = SetPointLight;
 
 function RemovePointLight() {
-	check_light = 0;
-	if (type == 3 || type == 4)
-	{
+	
+	scene.remove(light);
+	scene.remove(PointLightHelper);
+
+	if (type == 3 || type == 4) {
 		SetMaterial(type);
 	}
-	scene.remove(light);
-	scene.remove(helper);
+
 	render();
 }
 window.RemovePointLight = RemovePointLight;
 
-document.addEventListener('mousedown', onDocumentMouseDown, false);
+document.getElementById("rendering").addEventListener('mousedown', onDocumentMouseDown, false);
+
 function onDocumentMouseDown(event) {
 	event.preventDefault();
 	mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
@@ -291,28 +307,25 @@ function onDocumentMouseDown(event) {
 	let check_obj = 0;
 	if (intersects.length > 0) {
 		var obj;
-		for (obj in intersects)
-		{
-			if(intersects[obj].object.type == "Mesh")
-				{
-					check_obj = 1;
-					control_transform(intersects[obj].object);
-					break;
-				}
-			if(intersects[obj].object.type == "PointLightHelper")
-				{
-					check_obj = 1;
-					control_transform(light);
-					break;
-				}
+		for (obj in intersects) {
+			if (intersects[obj].object.type == "Mesh") {
+				check_obj = 1;
+				control_transform(intersects[obj].object);
+				break;
 			}
-		} 
-		if(check_obj == 0 && control.dragging == 0) control.detach();
+			if (intersects[obj].object.type == "PointLightHelper") {
+				check_obj = 1;
+				control_transform(light);
+				break;
+			}
+		}
+	}
+	if (check_obj == 0 && control.dragging == 0) control.detach();
 
 	render();
 }
 
 function render() {
 	renderer.render(scene, currentCamera);
-	console.log(scene.children)
+	// console.log(scene.children);
 }

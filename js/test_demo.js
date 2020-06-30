@@ -283,8 +283,7 @@ function SetPointLight() {
 window.SetPointLight = SetPointLight;
 
 function RemovePointLight() {
-	// light = scene.getObjectByName("pl1");
-	// const lightHelper = scene.getObjectByName("plh1");
+	
 	scene.remove(light);
 	scene.remove(PointLightHelper);
 
