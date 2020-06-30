@@ -11,7 +11,7 @@ import {
 } from '../js/TeapotBufferGeometry.js';
 
 var cameraPersp, cameraOrtho, currentCamera;
-var scene, renderer, control, orbit;
+var scene, renderer, control, orbit, raycaster;
 var geo = new THREE.Mesh();
 var Material;
 var BoxGeometry = new THREE.BoxGeometry(50, 50, 50, 40, 40, 40);
@@ -20,6 +20,9 @@ var ConeGeometry = new THREE.ConeGeometry(20, 60, 50, 20);
 var CylinderGeometry = new THREE.CylinderGeometry(20, 20, 40, 50, 30);
 var TorusGeometry = new THREE.TorusGeometry(20, 5, 20, 100);
 var TeapotGeometry = new TeapotBufferGeometry(20, 8);
+
+var mouse = new THREE.Vector2(),
+	INTERSECTED;
 
 init();
 render();
@@ -30,20 +33,42 @@ function init() {
 	scene.background = new THREE.Color('#343a40');
 
 	// Grid
-	scene.add(new THREE.GridHelper(400, 50, '#A3BAC3', '#A3BAC3'));
+	const grid = new THREE.GridHelper(400, 50, '#A3BAC3', '#A3BAC3');
+	scene.add(grid);
 
 	// Coordinate axes
-	scene.add(new THREE.AxesHelper(100));
+	// const axes = new THREE.AxesHelper(100);
+	// scene.add(axes);
 
 	// Camera
 	{
+		const fov = 75;
 		const aspect = window.innerWidth / window.innerHeight;
-		cameraPersp = new THREE.PerspectiveCamera(75, aspect, 0.01, 2000);
+		const near = 0.01;
+		const far = 2000;
+		cameraPersp = new THREE.PerspectiveCamera(fov, aspect, near, far);
 		// cameraOrtho = new THREE.OrthographicCamera(-600 * aspect, 600 * aspect, 600, -600, 0.01, 30000);
 		currentCamera = cameraPersp;
 		currentCamera.position.set(1, 50, 100);
 		currentCamera.lookAt(0, 0, 0);
 	}
+
+	SetPointLight();
+
+	var cubeGeometry = new THREE.BoxGeometry(20, 20, 20);
+	var cubeMaterial = new THREE.MeshLambertMaterial({
+		color: 0x999999,
+		wireframe: false
+	});
+	var object = new THREE.Mesh(cubeGeometry, cubeMaterial);
+
+	object.position.x = 0;
+	object.position.y = 0;
+	object.position.z = 0;
+
+	scene.add(object);
+	raycaster = new THREE.Raycaster();
+	document.addEventListener('mousedown', onDocumentMouseDown, false);
 
 	renderer = new THREE.WebGLRenderer();
 	renderer.setPixelRatio(window.devicePixelRatio);
@@ -92,7 +117,38 @@ function init() {
 		}
 	});
 
-	SetPointLight();
+}
+
+function onDocumentMouseDown(event) {
+	event.preventDefault();
+	mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+	mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+	// find intersections
+	raycaster.setFromCamera(mouse, currentCamera);
+	var intersects = raycaster.intersectObjects(scene.children);
+	console.log(intersects.length);
+	var check_mesh = 0;
+	if (intersects.length > 0) {
+		var obj;
+		for (obj in intersects)
+			if(intersects[obj].object.type == "Mesh" || intersects[obj].object.type == "1")
+				{
+					check_mesh = 1;
+					if (INTERSECTED != intersects[obj].object) {
+						if (INTERSECTED) INTERSECTED.material.emissive.setHex(INTERSECTED.currentHex);
+						INTERSECTED = intersects[obj].object;
+						INTERSECTED.currentHex = INTERSECTED.material.emissive.getHex();
+						INTERSECTED.material.emissive.setHex(0xff0000);
+					break;
+					}
+		}
+	} 
+	if (check_mesh == 0) {
+		if (INTERSECTED) 
+			INTERSECTED.material.emissive.setHex(INTERSECTED.currentHex);
+		INTERSECTED = null;
+	}
+	render();
 }
 
 var type = 3,
@@ -216,12 +272,12 @@ function EventScale() {
 window.EventScale = EventScale;
 
 function SetPointLight() {
-	console.log("a")
 	let color = '#FFFFFF';
 	let intensity = 1;
 	let light = new THREE.PointLight(color, intensity);
 	light.position.set(0, 10, 0);
 	scene.add(light);
+
 	const helper = new THREE.PointLightHelper(light);
 	scene.add(helper);
 }
