@@ -9,26 +9,22 @@ import {
 import {
 	TeapotBufferGeometry
 } from '../js/TeapotBufferGeometry.js';
-import {
-	Projector
-} from '../js/Projector.js';
 
 var cameraPersp, cameraOrtho, currentCamera;
-var scene, renderer, control, orbit;
-var mesh;
+var scene, renderer, control, orbit, mesh, raycaster, light;
 var Material = new THREE.MeshBasicMaterial({
 	color: '#F5F5F5',
-});;
+});
 Material.needsUpdate = true;
+var texture;
+var mouse = new THREE.Vector2();
+
 var BoxGeometry = new THREE.BoxGeometry(50, 50, 50, 20, 20, 20);
 var SphereGeometry = new THREE.SphereGeometry(30, 60, 60);
 var ConeGeometry = new THREE.ConeGeometry(20, 60, 50, 20);
 var CylinderGeometry = new THREE.CylinderGeometry(20, 20, 40, 50, 20);
 var TorusGeometry = new THREE.TorusGeometry(20, 5, 20, 100);
 var TeapotGeometry = new TeapotBufferGeometry(20, 8);
-var texture;
-var objects = {};
-
 
 init();
 render();
@@ -42,7 +38,7 @@ function init() {
 	scene.add(new THREE.GridHelper(400, 50, '#A3BAC3', '#A3BAC3'));
 
 	// Coordinate axes
-	scene.add(new THREE.AxesHelper(100));
+	// scene.add(new THREE.AxesHelper(100));
 
 	// Camera
 	{
@@ -53,6 +49,8 @@ function init() {
 		currentCamera.position.set(1, 50, 100);
 		currentCamera.lookAt(0, 0, 0);
 	}
+
+	raycaster = new THREE.Raycaster();
 
 	renderer = new THREE.WebGLRenderer();
 	renderer.setPixelRatio(window.devicePixelRatio);
@@ -71,10 +69,6 @@ function init() {
 		render();
 	});
 
-	// var light = new THREE.DirectionalLight('#FFFFFF', 2);
-	// light.position.set(1, 1, 1);
-	// scene.add(light);
-
 	orbit = new OrbitControls(currentCamera, renderer.domElement);
 	orbit.update();
 	orbit.addEventListener('change', render);
@@ -85,78 +79,92 @@ function init() {
 	control.addEventListener('dragging-changed', function (event) {
 		orbit.enabled = !event.value;
 	});
-
-	SetPointLight();
 }
-var type = 3,
-	d_id = null,
-	light = 0;
+var check_light = 0;
 
 function setTexture(url) {
-	if (d_id == null) return;
-	texture = new THREE.TextureLoader().load(url, render);
-	texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
-	SetMaterial(4);
+	mesh = scene.getObjectByName("mesh1");
+	if (mesh) {
+		texture = new THREE.TextureLoader().load(url, render);
+		texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+		SetMaterial(4);
+	}
 }
 window.setTexture = setTexture;
 
+function CloneMesh(dummy_mesh) {
+	mesh.name = dummy_mesh.name;
+	mesh.position.set(dummy_mesh.position.x, dummy_mesh.position.y, dummy_mesh.position.z);
+	mesh.rotation.set(dummy_mesh.rotation._x, dummy_mesh.rotation._y, dummy_mesh.rotation._z);
+	mesh.scale.set(dummy_mesh.scale.x, dummy_mesh.scale.y, dummy_mesh.scale.z);
+	scene.add(mesh);
+	control_transform(mesh);
+}
+
 function SetMaterial(material_id) {
 	mesh = scene.getObjectByName("mesh1");
+	light = scene.getObjectByName("pl1");
+	console.log(light);
+
 	if (mesh) {
-		console.log(mesh);
+		const dummy_mesh = mesh.clone();
+		scene.remove(mesh);
+
 		switch (material_id) {
 			case 1:
-				Material = new THREE.PointsMaterial({
-					color: '#FFFFFF',
+				const PointMaterial = new THREE.PointsMaterial({
+					color: '#F5F5F5',
 					sizeAttenuation: false,
 					size: 1,
 				});
 
-				const dummy_mesh = mesh.clone();
-				mesh = new THREE.Points(dummy_mesh.geometry, Material);
-				mesh.name = dummy_mesh.name;
-				mesh.set
-				scene.add(mesh);
-				control_transform(mesh);
-				console.log("point", mesh);
+				mesh = new THREE.Points(dummy_mesh.geometry, PointMaterial);
+				CloneMesh(dummy_mesh);
+
 				break;
 			case 2:
-				console.log('1111');
-				Material = new THREE.MeshBasicMaterial({
-					color: '#FFFFFF',
+				const LineMaterial = new THREE.MeshBasicMaterial({
+					color: '#F5F5F5',
 					wireframe: true,
 				});
-				console.log("line", mesh);
+
+				mesh = new THREE.Mesh(dummy_mesh.geometry, LineMaterial);
+				CloneMesh(dummy_mesh);
+
 				break;
 			case 3:
-				if (light == 0)
-					Material = new THREE.MeshBasicMaterial({
+				let SolidMaterial;
+				if (!light)
+					SolidMaterial = new THREE.MeshBasicMaterial({
 						color: '#FF00FF',
 					});
 				else
-					Material = new THREE.MeshPhongMaterial({
+					SolidMaterial = new THREE.MeshPhongMaterial({
 						color: '#FF00FF',
 					});
-				console.log("solid", mesh);
+
+
+				mesh = new THREE.Mesh(dummy_mesh.geometry, SolidMaterial);
+				CloneMesh(dummy_mesh);
+
 				break;
 			case 4:
-				if (light == 0)
-					Material = new THREE.MeshBasicMaterial({
+				let TextureMartial;
+				if (!light)
+					TextureMartial = new THREE.MeshBasicMaterial({
 						map: texture,
 						transparent: true
 					});
 				else
-					Material = new THREE.MeshLambertMaterial({
+					TextureMartial = new THREE.MeshLambertMaterial({
 						map: texture,
 						transparent: true
 					});
-				console.log(mesh);
+				mesh = new THREE.Mesh(dummy_mesh.geometry, TextureMartial);
+				CloneMesh(dummy_mesh);
 				break;
 		}
 
-		mesh.material = Material;
-		// AddGeo(d_id, geo.position);
-		// control_transform(mesh);
 		render();
 	}
 }
@@ -168,40 +176,22 @@ function AddGeo(mesh_id, position = null) {
 
 	switch (mesh_id) {
 		case 1:
-			if (type == 1)
-				mesh = new THREE.Points(BoxGeometry, Material);
-			else
-				mesh = new THREE.Mesh(BoxGeometry, Material);
+			mesh = new THREE.Mesh(BoxGeometry, Material);
 			break;
 		case 2:
-			if (type == 1)
-				mesh = new THREE.Points(SphereGeometry, Material);
-			else
-				mesh = new THREE.Mesh(SphereGeometry, Material);
+			mesh = new THREE.Mesh(SphereGeometry, Material);
 			break;
 		case 3:
-			if (type == 1)
-				mesh = new THREE.Points(ConeGeometry, Material);
-			else
-				mesh = new THREE.Mesh(ConeGeometry, Material);
+			mesh = new THREE.Mesh(ConeGeometry, Material);
 			break;
 		case 4:
-			if (type == 1)
-				mesh = new THREE.Points(CylinderGeometry, Material);
-			else
-				mesh = new THREE.Mesh(CylinderGeometry, Material);
+			mesh = new THREE.Mesh(CylinderGeometry, Material);
 			break;
 		case 5:
-			if (type == 1)
-				mesh = new THREE.Points(TorusGeometry, Material);
-			else
-				mesh = new THREE.Mesh(TorusGeometry, Material);
+			mesh = new THREE.Mesh(TorusGeometry, Material);
 			break;
 		case 6:
-			if (type == 1)
-				mesh = new THREE.Points(TeapotGeometry, Material);
-			else
-				mesh = new THREE.Mesh(TeapotGeometry, Material);
+			mesh = new THREE.Mesh(TeapotGeometry, Material);
 			break;
 	}
 	mesh.name = "mesh1";
@@ -268,16 +258,64 @@ function EventScale() {
 window.EventScale = EventScale;
 
 function SetPointLight() {
-	let color = '#FFFFFF';
-	let intensity = 1;
-	let light = new THREE.PointLight(color, intensity);
-	light.position.set(0, 50, 0);
-	scene.add(light);
-	const helper = new THREE.PointLightHelper(light);
-	scene.add(helper);
+	light = scene.getObjectByName("pl1");
+	if (!light) {
+		const color = '#FFFFFF';
+		const intensity = 2;
+		light = new THREE.PointLight(color, intensity);
+		light.position.set(0, 70, 0);
+		light.name = "pl1"
+		scene.add(light);
+		control_transform(light);
+
+		const PointLightHelper = new THREE.PointLightHelper(light);
+		PointLightHelper.name = "plh1"
+		scene.add(PointLightHelper);
+		render();
+	}
+}
+window.SetPointLight = SetPointLight;
+
+function RemovePointLight() {
+	light = scene.getObjectByName("pl1");
+	const lightHelper = scene.getObjectByName("plh1");
+	scene.remove(light);
+	scene.remove(lightHelper);
+	render();
+}
+window.RemovePointLight = RemovePointLight;
+
+document.addEventListener('mousedown', onDocumentMouseDown, false);
+
+function onDocumentMouseDown(event) {
+	event.preventDefault();
+	mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+	mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+	// find intersections
+	raycaster.setFromCamera(mouse, currentCamera);
+	var intersects = raycaster.intersectObjects(scene.children);
+	let check_obj = 0;
+	if (intersects.length > 0) {
+		var obj;
+		for (obj in intersects) {
+			if (intersects[obj].object.type == "Mesh") {
+				check_obj = 1;
+				control_transform(intersects[obj].object);
+				break;
+			}
+			if (intersects[obj].object.type == "PointLightHelper") {
+				check_obj = 1;
+				control_transform(light);
+				break;
+			}
+		}
+	}
+	if (check_obj == 0 && control.dragging == 0) control.detach();
+
+	render();
 }
 
 function render() {
 	renderer.render(scene, currentCamera);
-	// console.log(scene.children)
+	console.log(scene.children);
 }
