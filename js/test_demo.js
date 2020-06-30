@@ -325,6 +325,43 @@ function onDocumentMouseDown(event) {
 	render();
 }
 
+var id_animation;
+function animation(id){
+	cancelAnimationFrame(id_animation);
+	mesh.rotation.set(0, 0, 0);
+	switch(id)
+	{
+		case 1:
+			animation1();
+			break;
+		case 2:
+			animation2();
+			break;
+		case 3:
+			animation3();
+	}
+	render();
+}
+window.animation = animation;
+
+function animation1(){
+	mesh.rotation.x += 0.01;
+	render();
+	id_animation = requestAnimationFrame(animation1);
+}
+function animation2(){
+	mesh.rotation.y += 0.01;
+	render();
+	id_animation = requestAnimationFrame(animation2);
+}
+function animation3(){
+	mesh.rotation.x += Math.PI / 180;
+	mesh.rotation.y += Math.PI / 180;
+	mesh.rotation.z += Math.PI / 180
+	render();
+	id_animation = requestAnimationFrame(animation3);
+}
+
 function render() {
 	renderer.render(scene, currentCamera);
 	// console.log(scene.children);
