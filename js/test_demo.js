@@ -69,10 +69,6 @@ function init() {
 		render();
 	});
 
-	// var light = new THREE.DirectionalLight('#FFFFFF', 2);
-	// light.position.set(1, 1, 1);
-	// scene.add(light);
-
 	orbit = new OrbitControls(currentCamera, renderer.domElement);
 	orbit.update();
 	orbit.addEventListener('change', render);
@@ -83,10 +79,8 @@ function init() {
 	control.addEventListener('dragging-changed', function (event) {
 		orbit.enabled = !event.value;
 	});
-
-	// SetPointLight();
 }
-var light = 0;
+var check_light = 0;
 
 function setTexture(url) {
 	mesh = scene.getObjectByName("mesh1");
@@ -109,6 +103,9 @@ function CloneMesh(dummy_mesh) {
 
 function SetMaterial(material_id) {
 	mesh = scene.getObjectByName("mesh1");
+	light = scene.getObjectByName("pl1");
+	console.log(light);
+
 	if (mesh) {
 		const dummy_mesh = mesh.clone();
 		scene.remove(mesh);
@@ -137,15 +134,15 @@ function SetMaterial(material_id) {
 				break;
 			case 3:
 				let SolidMaterial;
-				if (light == 0) {
+				if (!light)
 					SolidMaterial = new THREE.MeshBasicMaterial({
 						color: '#FF00FF',
 					});
-				} else {
+				else
 					SolidMaterial = new THREE.MeshPhongMaterial({
 						color: '#FF00FF',
 					});
-				}
+
 
 				mesh = new THREE.Mesh(dummy_mesh.geometry, SolidMaterial);
 				CloneMesh(dummy_mesh);
@@ -153,7 +150,7 @@ function SetMaterial(material_id) {
 				break;
 			case 4:
 				let TextureMartial;
-				if (light == 0)
+				if (!light)
 					TextureMartial = new THREE.MeshBasicMaterial({
 						map: texture,
 						transparent: true
@@ -201,7 +198,6 @@ function AddGeo(mesh_id, position = null) {
 
 	scene.add(mesh);
 	control_transform(mesh);
-	console.log(scene.children);
 
 	render();
 }
@@ -262,16 +258,63 @@ function EventScale() {
 window.EventScale = EventScale;
 
 function SetPointLight() {
-	let color = '#FFFFFF';
-	let intensity = 1;
-	let light = new THREE.PointLight(color, intensity);
-	light.position.set(0, 50, 0);
-	scene.add(light);
-	const helper = new THREE.PointLightHelper(light);
-	scene.add(helper);
+	light = scene.getObjectByName("pl1");
+	if (!light) {
+		const color = '#FFFFFF';
+		const intensity = 2;
+		light = new THREE.PointLight(color, intensity);
+		light.position.set(0, 70, 0);
+		light.name = "pl1"
+		scene.add(light);
+
+		const PointLightHelper = new THREE.PointLightHelper(light);
+		PointLightHelper.name = "plh1"
+		scene.add(PointLightHelper);
+		render();
+	}
+}
+window.SetPointLight = SetPointLight;
+
+function RemovePointLight() {
+	light = scene.getObjectByName("pl1");
+	const lightHelper = scene.getObjectByName("plh1");
+	scene.remove(light);
+	scene.remove(lightHelper);
+	render();
+}
+window.RemovePointLight = RemovePointLight;
+
+document.addEventListener('mousedown', onDocumentMouseDown, false);
+
+function onDocumentMouseDown(event) {
+	event.preventDefault();
+	mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+	mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+	// find intersections
+	raycaster.setFromCamera(mouse, currentCamera);
+	var intersects = raycaster.intersectObjects(scene.children);
+	let check_mesh = 0;
+	if (intersects.length > 0) {
+		var obj;
+		for (obj in intersects) {
+			if (intersects[obj].object.type == "Mesh") {
+				check_mesh = 1;
+				control_transform(intersects[obj].object);
+				break;
+			}
+			if (intersects[obj].object.type == "PointLightHelper") {
+				check_mesh = 2;
+				control_transform(light);
+				break;
+			}
+		}
+	}
+	if (check_mesh == 0) control.detach();
+
+	render();
 }
 
 function render() {
 	renderer.render(scene, currentCamera);
-	// console.log(scene.children);
+	console.log(scene.children);
 }
