@@ -15,7 +15,7 @@ import {
 
 var cameraPersp, cameraOrtho, currentCamera;
 var scene, renderer, control, orbit, raycaster, light, helper;
-var type = 3, d_id = null, light = 0;
+var type = 3, d_id = null, check_light = 0;
 var geo;
 var Material = new THREE.MeshBasicMaterial({
 	color: '#FFFFFF',
@@ -86,9 +86,6 @@ function init() {
 		orbit.enabled = !event.value;
 	});
 }
-var type = 3,
-	d_id = null,
-	check_light = 0;
 
 function setTexture(url) {
 	if (d_id == null) return;
