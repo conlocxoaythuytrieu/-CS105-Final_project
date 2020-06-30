@@ -16,7 +16,7 @@ import {
 var cameraPersp, cameraOrtho, currentCamera;
 var scene, renderer, control, orbit;
 var geo;
-var Material = new THREE.MeshPhongMaterial({
+var Material = new THREE.MeshBasicMaterial({
 	color: 0xffffff,
 });;
 var BoxGeometry = new THREE.BoxGeometry(50, 50, 50, 40, 40, 40);
@@ -25,7 +25,7 @@ var ConeGeometry = new THREE.ConeGeometry(20, 60, 50, 20);
 var CylinderGeometry = new THREE.CylinderGeometry(20, 20, 40, 50, 30);
 var TorusGeometry = new THREE.TorusGeometry(20, 5, 20, 100);
 var TeapotGeometry = new TeapotBufferGeometry(20, 8);
-
+var texture;
 init();
 render();
 
@@ -71,11 +71,6 @@ function init() {
 	// light.position.set(1, 1, 1);
 	// scene.add(light);
 
-	// var texture = new THREE.TextureLoader().load('/img/1.png', render);
-	// texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
-
-	// var material = new THREE.MeshLambertMaterial({ map: texture, transparent: true });
-
 	orbit = new OrbitControls(currentCamera, renderer.domElement);
 	orbit.update();
 	orbit.addEventListener('change', render);
@@ -89,11 +84,21 @@ function init() {
 
 	SetPointLight();
 }
-
 var type = 3,
-	d_id;
+	d_id = null,
+	light = 0;
+function setTexture(url)
+{
+	if (d_id == null) return;
+	texture = new THREE.TextureLoader().load(url, render);
+	texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+	SetMaterial(4);
+}
+window.setTexture = setTexture;
+
 
 function SetMaterial(x) {
+	if (d_id == null) return;
 	type = x;
 	switch (type) {
 		case 1:
@@ -109,9 +114,20 @@ function SetMaterial(x) {
 			});
 			break;
 		case 3:
-			Material = new THREE.MeshPhongMaterial({
-				color: 0xffffff,
-			});
+			if (light == 0)
+				Material = new THREE.MeshBasicMaterial({
+					color: 0xffffff,
+				});
+			else
+				Material = new THREE.MeshPhongMaterial({
+					color: 0xffffff,
+				});
+			break;
+		case 4:
+			if (light == 0)
+				Material = new THREE.MeshBasicMaterial({ map: texture, transparent: true });
+			else
+				Material = new THREE.MeshLambertMaterial({ map: texture, transparent: true });
 			break;
 	}
 	AddGeo(d_id, geo.position);
@@ -140,10 +156,12 @@ function setNear(value) {
 window.setNear = setNear;
 
 function AddGeo(id, position = null) {
+	console.log("type =", type)
 	if (id > 0 && id < 7) {
 		d_id = id;
 		scene.remove(geo);
 	}
+	console.log("d_id = ", d_id)
 	switch (id) {
 		case 1:
 			if (type == 1)
@@ -184,8 +202,10 @@ function AddGeo(id, position = null) {
 	}
 	// geo.rotation.x += 0.01; // animation
 	if (position != null)
-		geo.position.set(position['x'], position['y'], position['z']);
-	console.log(position);
+		{
+			geo.position.set(position['x'], position['y'], position['z']);
+		}
+	console.log("position = ",position);
 	scene.add(geo);
 	control_transform(geo);
 	render();
@@ -230,7 +250,7 @@ function SetPointLight() {
 	let color = '#FFFFFF';
 	let intensity = 1;
 	let light = new THREE.PointLight(color, intensity);
-	light.position.set(0, 10, 0);
+	light.position.set(0, 50, 0);
 	scene.add(light);
 	const helper = new THREE.PointLightHelper(light);
 	scene.add(helper);
@@ -238,4 +258,5 @@ function SetPointLight() {
 
 function render() {
 	renderer.render(scene, currentCamera);
+	// console.log(scene.children)
 }
