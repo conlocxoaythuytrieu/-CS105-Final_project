@@ -18,12 +18,12 @@ var scene, renderer, control, orbit;
 var type = 3, d_id = null, light = 0;
 var geo;
 var Material = new THREE.MeshBasicMaterial({
-	color: 0xffffff,
-});
-var BoxGeometry = new THREE.BoxGeometry(50, 50, 50, 40, 40, 40);
+	color: '#FFFFFF',
+});;
+var BoxGeometry = new THREE.BoxGeometry(50, 50, 50, 20, 20, 20);
 var SphereGeometry = new THREE.SphereGeometry(30, 60, 60);
 var ConeGeometry = new THREE.ConeGeometry(20, 60, 50, 20);
-var CylinderGeometry = new THREE.CylinderGeometry(20, 20, 40, 50, 30);
+var CylinderGeometry = new THREE.CylinderGeometry(20, 20, 40, 50, 20);
 var TorusGeometry = new THREE.TorusGeometry(20, 5, 20, 100);
 var TeapotGeometry = new TeapotBufferGeometry(20, 8);
 var texture;
@@ -68,7 +68,7 @@ function init() {
 		render();
 	});
 
-	// var light = new THREE.DirectionalLight(0xffffff, 2);
+	// var light = new THREE.DirectionalLight('#FFFFFF', 2);
 	// light.position.set(1, 1, 1);
 	// scene.add(light);
 
@@ -85,8 +85,11 @@ function init() {
 
 	SetPointLight();
 }
-function setTexture(url)
-{
+var type = 3,
+	d_id = null,
+	light = 0;
+
+function setTexture(url) {
 	if (d_id == null) return;
 	texture = new THREE.TextureLoader().load(url, render);
 	texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
@@ -101,57 +104,43 @@ function SetMaterial(x) {
 	switch (type) {
 		case 1:
 			Material = new THREE.PointsMaterial({
-				color: 0xffffff,
-				size: 0.2,
+				color: '#FFFFFF',
+				sizeAttenuation: false,
+				size: 1,
 			});
 			break;
 		case 2:
 			Material = new THREE.MeshBasicMaterial({
-				color: 0xffffff,
+				color: '#FFFFFF',
 				wireframe: true,
 			});
 			break;
 		case 3:
 			if (light == 0)
 				Material = new THREE.MeshBasicMaterial({
-					color: 0xffffff,
+					color: '#FFFFFF',
 				});
 			else
 				Material = new THREE.MeshPhongMaterial({
-					color: 0xffffff,
+					color: '#FFFFFF',
 				});
 			break;
 		case 4:
 			if (light == 0)
-				Material = new THREE.MeshBasicMaterial({ map: texture, transparent: true });
+				Material = new THREE.MeshBasicMaterial({
+					map: texture,
+					transparent: true
+				});
 			else
-				Material = new THREE.MeshLambertMaterial({ map: texture, transparent: true });
+				Material = new THREE.MeshLambertMaterial({
+					map: texture,
+					transparent: true
+				});
 			break;
 	}
 	AddGeo(d_id, geo.position);
 }
 window.SetMaterial = SetMaterial;
-
-function setFOV(value) {
-	currentCamera.fov = Number(value);
-	currentCamera.updateProjectionMatrix();
-	render();
-}
-window.setFOV = setFOV;
-
-function setFar(value) {
-	currentCamera.far = Number(value);
-	currentCamera.updateProjectionMatrix();
-	render();
-}
-window.setFar = setFar;
-
-function setNear(value) {
-	currentCamera.near = Number(value);
-	currentCamera.updateProjectionMatrix();
-	render();
-}
-window.setNear = setNear;
 
 function AddGeo(id, position = null) {
 	console.log("type =", type)
@@ -199,12 +188,10 @@ function AddGeo(id, position = null) {
 			break;
 	}
 	// geo.rotation.x += 0.01; // animation
-	if (position != null)
-		{
-			geo.position.set(position['x'], position['y'], position['z']);
-		}
-	console.log("position = ",position);
-	console.log("geo = ",geo);
+	if (position != null) {
+		geo.position.set(position['x'], position['y'], position['z']);
+	}
+	console.log("position = ", position);
 	scene.add(geo);
 	control_transform(geo);
 	render();
@@ -229,6 +216,27 @@ function control_transform(geo) {
 		}
 	});
 }
+
+function setFOV(value) {
+	currentCamera.fov = Number(value);
+	currentCamera.updateProjectionMatrix();
+	render();
+}
+window.setFOV = setFOV;
+
+function setFar(value) {
+	currentCamera.far = Number(value);
+	currentCamera.updateProjectionMatrix();
+	render();
+}
+window.setFar = setFar;
+
+function setNear(value) {
+	currentCamera.near = Number(value);
+	currentCamera.updateProjectionMatrix();
+	render();
+}
+window.setNear = setNear;
 
 function EventTranslate() {
 	control.setMode("translate");
