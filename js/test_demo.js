@@ -11,21 +11,20 @@ import {
 } from '../js/TeapotBufferGeometry.js';
 
 var cameraPersp, cameraOrtho, currentCamera;
-var scene, renderer, control, orbit;
-var mesh;
+var scene, renderer, control, orbit, mesh, raycaster, light;
 var Material = new THREE.MeshBasicMaterial({
 	color: '#F5F5F5',
-});;
+});
 Material.needsUpdate = true;
+var texture;
+var mouse = new THREE.Vector2();
+
 var BoxGeometry = new THREE.BoxGeometry(50, 50, 50, 20, 20, 20);
 var SphereGeometry = new THREE.SphereGeometry(30, 60, 60);
 var ConeGeometry = new THREE.ConeGeometry(20, 60, 50, 20);
 var CylinderGeometry = new THREE.CylinderGeometry(20, 20, 40, 50, 20);
 var TorusGeometry = new THREE.TorusGeometry(20, 5, 20, 100);
 var TeapotGeometry = new TeapotBufferGeometry(20, 8);
-var texture;
-var objects = {};
-
 
 init();
 render();
@@ -50,6 +49,8 @@ function init() {
 		currentCamera.position.set(1, 50, 100);
 		currentCamera.lookAt(0, 0, 0);
 	}
+
+	raycaster = new THREE.Raycaster();
 
 	renderer = new THREE.WebGLRenderer();
 	renderer.setPixelRatio(window.devicePixelRatio);
@@ -85,14 +86,15 @@ function init() {
 
 	// SetPointLight();
 }
-var d_id = null,
-	light = 0;
+var light = 0;
 
 function setTexture(url) {
-	if (d_id == null) return;
-	texture = new THREE.TextureLoader().load(url, render);
-	texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
-	SetMaterial(4);
+	mesh = scene.getObjectByName("mesh1");
+	if (mesh) {
+		texture = new THREE.TextureLoader().load(url, render);
+		texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+		SetMaterial(4);
+	}
 }
 window.setTexture = setTexture;
 
@@ -113,56 +115,59 @@ function SetMaterial(material_id) {
 
 		switch (material_id) {
 			case 1:
-				Material = new THREE.PointsMaterial({
+				const PointMaterial = new THREE.PointsMaterial({
 					color: '#F5F5F5',
 					sizeAttenuation: false,
 					size: 1,
 				});
 
-				mesh = new THREE.Points(dummy_mesh.geometry, Material);
+				mesh = new THREE.Points(dummy_mesh.geometry, PointMaterial);
 				CloneMesh(dummy_mesh);
 
 				break;
 			case 2:
-				Material = new THREE.MeshBasicMaterial({
+				const LineMaterial = new THREE.MeshBasicMaterial({
 					color: '#F5F5F5',
 					wireframe: true,
 				});
 
-				mesh = new THREE.Mesh(dummy_mesh.geometry, Material);
+				mesh = new THREE.Mesh(dummy_mesh.geometry, LineMaterial);
 				CloneMesh(dummy_mesh);
 
 				break;
 			case 3:
-				if (light == 0)
-					Material = new THREE.MeshBasicMaterial({
+				let SolidMaterial;
+				if (light == 0) {
+					SolidMaterial = new THREE.MeshBasicMaterial({
 						color: '#FF00FF',
 					});
-				else
-					Material = new THREE.MeshPhongMaterial({
+				} else {
+					SolidMaterial = new THREE.MeshPhongMaterial({
 						color: '#FF00FF',
 					});
+				}
 
-				mesh = new THREE.Mesh(dummy_mesh.geometry, Material);
+				mesh = new THREE.Mesh(dummy_mesh.geometry, SolidMaterial);
 				CloneMesh(dummy_mesh);
 
 				break;
 			case 4:
+				let TextureMartial;
 				if (light == 0)
-					Material = new THREE.MeshBasicMaterial({
+					TextureMartial = new THREE.MeshBasicMaterial({
 						map: texture,
 						transparent: true
 					});
 				else
-					Material = new THREE.MeshLambertMaterial({
+					TextureMartial = new THREE.MeshLambertMaterial({
 						map: texture,
 						transparent: true
 					});
-				console.log(mesh);
+				mesh = new THREE.Mesh(dummy_mesh.geometry, TextureMartial);
+				CloneMesh(dummy_mesh);
 				break;
 		}
 
-		mesh.material = Material;
 		render();
 	}
 }
