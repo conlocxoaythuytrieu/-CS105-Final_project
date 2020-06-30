@@ -18,6 +18,7 @@ var Material = new THREE.MeshBasicMaterial({
 Material.needsUpdate = true;
 var texture;
 var mouse = new THREE.Vector2();
+var type = 3;
 
 var BoxGeometry = new THREE.BoxGeometry(50, 50, 50, 20, 20, 20);
 var SphereGeometry = new THREE.SphereGeometry(30, 60, 60);
@@ -80,7 +81,6 @@ function init() {
 		orbit.enabled = !event.value;
 	});
 }
-var check_light = 0;
 
 function setTexture(url) {
 	mesh = scene.getObjectByName("mesh1");
@@ -106,62 +106,65 @@ function SetMaterial(material_id) {
 	light = scene.getObjectByName("pl1");
 	console.log(light);
 
+	type = material_id;
+
 	if (mesh) {
 		const dummy_mesh = mesh.clone();
 		scene.remove(mesh);
 
 		switch (material_id) {
 			case 1:
-				const PointMaterial = new THREE.PointsMaterial({
+				Material = new THREE.PointsMaterial({
 					color: '#F5F5F5',
 					sizeAttenuation: false,
 					size: 1,
 				});
 
-				mesh = new THREE.Points(dummy_mesh.geometry, PointMaterial);
+				mesh = new THREE.Points(dummy_mesh.geometry, Material);
 				CloneMesh(dummy_mesh);
 
 				break;
 			case 2:
-				const LineMaterial = new THREE.MeshBasicMaterial({
+				Material = new THREE.MeshBasicMaterial({
 					color: '#F5F5F5',
 					wireframe: true,
 				});
 
-				mesh = new THREE.Mesh(dummy_mesh.geometry, LineMaterial);
+				mesh = new THREE.Mesh(dummy_mesh.geometry, Material);
 				CloneMesh(dummy_mesh);
 
 				break;
 			case 3:
-				let SolidMaterial;
 				if (!light)
-					SolidMaterial = new THREE.MeshBasicMaterial({
+					Material = new THREE.MeshBasicMaterial({
 						color: '#FF00FF',
 					});
 				else
-					SolidMaterial = new THREE.MeshPhongMaterial({
+					Material = new THREE.MeshPhongMaterial({
 						color: '#FF00FF',
 					});
 
-
-				mesh = new THREE.Mesh(dummy_mesh.geometry, SolidMaterial);
+				mesh = new THREE.Mesh(dummy_mesh.geometry, Material);
 				CloneMesh(dummy_mesh);
+				type = 0;
 
 				break;
 			case 4:
-				let TextureMartial;
 				if (!light)
-					TextureMartial = new THREE.MeshBasicMaterial({
+					Martial = new THREE.MeshBasicMaterial({
 						map: texture,
 						transparent: true
 					});
 				else
-					TextureMartial = new THREE.MeshLambertMaterial({
+					Martial = new THREE.MeshLambertMaterial({
 						map: texture,
 						transparent: true
 					});
-				mesh = new THREE.Mesh(dummy_mesh.geometry, TextureMartial);
+
+				mesh = new THREE.Mesh(dummy_mesh.geometry, Martial);
 				CloneMesh(dummy_mesh);
+				type = 1;
+
 				break;
 		}
 
@@ -258,7 +261,9 @@ function EventScale() {
 window.EventScale = EventScale;
 
 function SetPointLight() {
+	RemovePointLight();
 	light = scene.getObjectByName("pl1");
+
 	if (!light) {
 		const color = '#FFFFFF';
 		const intensity = 2;
@@ -267,6 +272,9 @@ function SetPointLight() {
 		light.name = "pl1"
 		scene.add(light);
 		control_transform(light);
+		if (type == 3 || type == 4) {
+			SetMaterial(type);
+		}
 
 		const PointLightHelper = new THREE.PointLightHelper(light);
 		PointLightHelper.name = "plh1"
@@ -317,5 +325,5 @@ function onDocumentMouseDown(event) {
 
 function render() {
 	renderer.render(scene, currentCamera);
-	console.log(scene.children);
+	// console.log(scene.children);
 }
