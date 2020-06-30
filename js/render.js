@@ -263,7 +263,8 @@ function SetPointLight() {
 	light = new THREE.PointLight(color, intensity);
 	light.position.set(0, 70, 0);
 	scene.add(light);
-	
+	control_transform(light);
+
 	const helper = new THREE.PointLightHelper(light);
 	scene.add(helper);
 	render();
@@ -289,26 +290,26 @@ function onDocumentMouseDown(event) {
 	// find intersections
 	raycaster.setFromCamera(mouse, currentCamera);
 	var intersects = raycaster.intersectObjects(scene.children);
-	let check_mesh = 0;
+	let check_obj = 0;
 	if (intersects.length > 0) {
 		var obj;
 		for (obj in intersects)
 		{
 			if(intersects[obj].object.type == "Mesh")
 				{
-					check_mesh = 1;
+					check_obj = 1;
 					control_transform(intersects[obj].object);
 					break;
 				}
 			if(intersects[obj].object.type == "PointLightHelper")
 				{
-					check_mesh = 2;
+					check_obj = 1;
 					control_transform(light);
 					break;
 				}
 			}
 		} 
-		if(check_mesh == 0) control.detach();
+		if(check_obj == 0 && control.dragging == 0) control.detach();
 
 	render();
 }
