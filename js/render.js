@@ -15,10 +15,11 @@ import {
 
 var cameraPersp, cameraOrtho, currentCamera;
 var scene, renderer, control, orbit;
+var type = 3, d_id = null, light = 0;
 var geo;
 var Material = new THREE.MeshBasicMaterial({
 	color: 0xffffff,
-});;
+});
 var BoxGeometry = new THREE.BoxGeometry(50, 50, 50, 40, 40, 40);
 var SphereGeometry = new THREE.SphereGeometry(30, 60, 60);
 var ConeGeometry = new THREE.ConeGeometry(20, 60, 50, 20);
@@ -84,9 +85,6 @@ function init() {
 
 	SetPointLight();
 }
-var type = 3,
-	d_id = null,
-	light = 0;
 function setTexture(url)
 {
 	if (d_id == null) return;
@@ -206,6 +204,7 @@ function AddGeo(id, position = null) {
 			geo.position.set(position['x'], position['y'], position['z']);
 		}
 	console.log("position = ",position);
+	console.log("geo = ",geo);
 	scene.add(geo);
 	control_transform(geo);
 	render();
@@ -215,6 +214,7 @@ window.AddGeo = AddGeo;
 function control_transform(geo) {
 	control.attach(geo);
 	scene.add(control);
+	console.log(control);
 	window.addEventListener('keydown', function (event) {
 		switch (event.keyCode) {
 			case 87: // W
