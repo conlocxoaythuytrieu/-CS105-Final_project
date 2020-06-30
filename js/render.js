@@ -30,21 +30,23 @@ render();
 function init() {
 	// Scene
 	scene = new THREE.Scene();
-	scene.background = new THREE.Color(0x343a40);
+	scene.background = new THREE.Color('#343a40');
 
 	// Grid
-	scene.add(new THREE.GridHelper(400, 50, 0xA3BAC3, 0xA3BAC3));
+	scene.add(new THREE.GridHelper(400, 50, '#A3BAC3', '#A3BAC3'));
 
 	// Coordinate axes
 	scene.add(new THREE.AxesHelper(100));
 
 	// Camera
-	const aspect = window.innerWidth / window.innerHeight;
-	cameraPersp = new THREE.PerspectiveCamera(75, aspect, 0.01, 2000);
-	// cameraOrtho = new THREE.OrthographicCamera(-600 * aspect, 600 * aspect, 600, -600, 0.01, 30000);
-	currentCamera = cameraPersp;
-	currentCamera.position.set(1, 50, 100);
-	currentCamera.lookAt(0, 0, 0);
+	{
+		const aspect = window.innerWidth / window.innerHeight;
+		cameraPersp = new THREE.PerspectiveCamera(75, aspect, 0.01, 2000);
+		// cameraOrtho = new THREE.OrthographicCamera(-600 * aspect, 600 * aspect, 600, -600, 0.01, 30000);
+		currentCamera = cameraPersp;
+		currentCamera.position.set(1, 50, 100);
+		currentCamera.lookAt(0, 0, 0);
+	}
 
 	renderer = new THREE.WebGLRenderer();
 	renderer.setPixelRatio(window.devicePixelRatio);
@@ -53,8 +55,8 @@ function init() {
 
 	// check when the browser size has changed and adjust the camera accordingly
 	window.addEventListener('resize', function () {
-		var WIDTH = window.innerWidth;
-		var HEIGHT = window.innerHeight;
+		const WIDTH = window.innerWidth;
+		const HEIGHT = window.innerHeight;
 
 		currentCamera.aspect = WIDTH / HEIGHT;
 		currentCamera.updateProjectionMatrix();
@@ -83,6 +85,7 @@ function init() {
 		orbit.enabled = !event.value;
 	});
 
+	SetPointLight();
 }
 
 var type = 3,
@@ -178,34 +181,58 @@ function AddGeo(id, position = null) {
 			break;
 	}
 	// geo.rotation.x += 0.01; // animation
-	if (position!=null)
+	if (position != null)
 		geo.position.set(position['x'], position['y'], position['z']);
 	console.log(position);
 	scene.add(geo);
 	control_transform(geo);
 	render();
 }
+window.AddGeo = AddGeo;
 
-function control_transform(geo)
-{
+function control_transform(geo) {
 	control.attach(geo);
 	scene.add(control);
 	window.addEventListener('keydown', function (event) {
 		switch (event.keyCode) {
 			case 87: // W
-				control.setMode("translate");
+				EventTranslate();
 				break;
 			case 69: // E
-				control.setMode("rotate");
+				EventRotate();
 				break;
 			case 82: // R
-				control.setMode("scale");
+				EventScale();
 				break;
 		}
 	});
 }
 
-window.AddGeo = AddGeo;
+function EventTranslate() {
+	control.setMode("translate");
+}
+window.EventTranslate = EventTranslate;
+
+function EventRotate() {
+	control.setMode("rotate");
+}
+window.EventRotate = EventRotate;
+
+function EventScale() {
+	control.setMode("scale");
+}
+window.EventScale = EventScale;
+
+function SetPointLight() {
+	console.log("a")
+	let color = '#FFFFFF';
+	let intensity = 1;
+	let light = new THREE.PointLight(color, intensity);
+	light.position.set(0, 10, 0);
+	scene.add(light);
+	const helper = new THREE.PointLightHelper(light);
+	scene.add(helper);
+}
 
 function render() {
 	renderer.render(scene, currentCamera);
