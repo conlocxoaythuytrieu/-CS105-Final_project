@@ -14,12 +14,14 @@ import {
 } from '../js/Projector.js';
 
 var cameraPersp, cameraOrtho, currentCamera;
-var scene, renderer, control, orbit;
+var scene, renderer, control, orbit, raycaster, light;
 var type = 3, d_id = null, light = 0;
 var geo;
 var Material = new THREE.MeshBasicMaterial({
 	color: '#FFFFFF',
-});;
+});
+var mouse = new THREE.Vector2(),
+	INTERSECTED;
 var BoxGeometry = new THREE.BoxGeometry(50, 50, 50, 20, 20, 20);
 var SphereGeometry = new THREE.SphereGeometry(30, 60, 60);
 var ConeGeometry = new THREE.ConeGeometry(20, 60, 50, 20);
@@ -54,6 +56,7 @@ function init() {
 	renderer = new THREE.WebGLRenderer();
 	renderer.setPixelRatio(window.devicePixelRatio);
 	renderer.setSize(window.innerWidth, window.innerHeight);
+	raycaster = new THREE.Raycaster();
 	document.getElementById("rendering").appendChild(renderer.domElement);
 
 	// check when the browser size has changed and adjust the camera accordingly
@@ -82,12 +85,10 @@ function init() {
 	control.addEventListener('dragging-changed', function (event) {
 		orbit.enabled = !event.value;
 	});
-
-	SetPointLight();
 }
 var type = 3,
 	d_id = null,
-	light = 0;
+	check_light = 0;
 
 function setTexture(url) {
 	if (d_id == null) return;
@@ -116,7 +117,7 @@ function SetMaterial(x) {
 			});
 			break;
 		case 3:
-			if (light == 0)
+			if (check_light == 0)
 				Material = new THREE.MeshBasicMaterial({
 					color: '#FFFFFF',
 				});
@@ -126,7 +127,7 @@ function SetMaterial(x) {
 				});
 			break;
 		case 4:
-			if (light == 0)
+			if (check_light == 0)
 				Material = new THREE.MeshBasicMaterial({
 					map: texture,
 					transparent: true
@@ -143,12 +144,12 @@ function SetMaterial(x) {
 window.SetMaterial = SetMaterial;
 
 function AddGeo(id, position = null) {
-	console.log("type =", type)
+	// console.log("type =", type)
 	if (id > 0 && id < 7) {
 		d_id = id;
 		scene.remove(geo);
 	}
-	console.log("d_id = ", d_id)
+	// console.log("d_id = ", d_id)
 	switch (id) {
 		case 1:
 			if (type == 1)
@@ -191,9 +192,8 @@ function AddGeo(id, position = null) {
 	if (position != null) {
 		geo.position.set(position['x'], position['y'], position['z']);
 	}
-	console.log("position = ", position);
+	// console.log("position = ", position);
 	scene.add(geo);
-	control_transform(geo);
 	render();
 }
 window.AddGeo = AddGeo;
@@ -201,7 +201,6 @@ window.AddGeo = AddGeo;
 function control_transform(geo) {
 	control.attach(geo);
 	scene.add(control);
-	console.log(control);
 	window.addEventListener('keydown', function (event) {
 		switch (event.keyCode) {
 			case 87: // W
@@ -252,16 +251,66 @@ function EventScale() {
 	control.setMode("scale");
 }
 window.EventScale = EventScale;
-
 function SetPointLight() {
-	console.log("a")
+	check_light = 1;
+	if (type == 3 || type == 4)
+	{
+		SetMaterial(type);
+	}
+	else return;
 	let color = '#FFFFFF';
-	let intensity = 1;
-	let light = new THREE.PointLight(color, intensity);
-	light.position.set(0, 50, 0);
+	let intensity = 2;
+	light = new THREE.PointLight(color, intensity);
+	light.position.set(0, 70, 0);
 	scene.add(light);
+	
 	const helper = new THREE.PointLightHelper(light);
 	scene.add(helper);
+	render();
+}
+window.SetPointLight = SetPointLight;
+
+function RemovePointLight() {
+	// check_light = 0;
+	// if (type == 3 || type == 4)
+	// {
+	// 	SetMaterial(type);
+	// }
+	// else return;
+// 	scene.remove(light);
+}
+window.RemovePointLight = RemovePointLight;
+
+document.addEventListener('mousedown', onDocumentMouseDown, false);
+function onDocumentMouseDown(event) {
+	event.preventDefault();
+	mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+	mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+	// find intersections
+	raycaster.setFromCamera(mouse, currentCamera);
+	var intersects = raycaster.intersectObjects(scene.children);
+	let check_mesh = 0;
+	if (intersects.length > 0) {
+		var obj;
+		for (obj in intersects)
+		{
+			if(intersects[obj].object.type == "Mesh")
+				{
+					check_mesh = 1;
+					control_transform(intersects[obj].object);
+					break;
+				}
+			if(intersects[obj].object.type == "PointLightHelper")
+				{
+					check_mesh = 2;
+					control_transform(light);
+					break;
+				}
+			}
+		} 
+		if(check_mesh == 0) control.detach();
+
+	render();
 }
 
 function render() {
