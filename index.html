@@ -44,7 +44,8 @@
 						<a class="dropdown-item" href="#" onclick="SetMaterial(1);">Point</a>
 						<a class="dropdown-item" href="#" onclick="SetMaterial(2);">Line</a>
 						<a class="dropdown-item" href="#" onclick="SetMaterial(3);">Solid</a>
-						<input type="file" accept="image/*" id="texture_img" style="display: none;" onchange="setTexture(window.URL.createObjectURL(this.files[0]))"/>
+						<input type="file" accept="image/*" id="texture_img" style="display: none;"
+							onchange="setTexture(window.URL.createObjectURL(this.files[0]))" />
 						<a class="dropdown-item" href="#" name="button" onclick="thisFileUpload();">Select texture</a>
 					</div>
 				</li>
@@ -175,8 +176,8 @@
 	</script>
 	<script src="js/bootstrap.min.js"></script>
 
-	<!-- <script type="module" src="js/test_demo.js"></script> -->
-	<script type="module" src="js/test_demo_2.js"></script>
+	<script type="module" src="js/test_demo.js"></script>
+	<!-- <script type="module" src="js/test_demo_2.js"></script> -->
 	<!-- <script type="module" src="./js/render.js"></script> -->
 
 	<script>
@@ -207,9 +208,10 @@
 				setFar($valueFar.val());
 			});
 		});
+
 		function thisFileUpload() {
-            document.getElementById("texture_img").click();
-        };
+			document.getElementById("texture_img").click();
+		};
 	</script>
 </body>
 
