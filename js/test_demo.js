@@ -296,7 +296,7 @@ function RemovePointLight() {
 }
 window.RemovePointLight = RemovePointLight;
 
-document.addEventListener('mousedown', onDocumentMouseDown, false);
+document.getElementById("rendering").addEventListener('mousedown', onDocumentMouseDown, false);
 
 function onDocumentMouseDown(event) {
 	event.preventDefault();
