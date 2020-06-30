@@ -127,17 +127,28 @@ function onDocumentMouseDown(event) {
 	raycaster.setFromCamera(mouse, currentCamera);
 	var intersects = raycaster.intersectObjects(scene.children);
 	console.log(intersects.length);
+	var check_mesh = 0;
 	if (intersects.length > 0) {
-		if (INTERSECTED != intersects[0].object) {
-			if (INTERSECTED) INTERSECTED.material.emissive.setHex(INTERSECTED.currentHex);
-			INTERSECTED = intersects[0].object;
-			INTERSECTED.currentHex = INTERSECTED.material.emissive.getHex();
-			INTERSECTED.material.emissive.setHex(0xff0000);
+		var obj;
+		for (obj in intersects)
+			if(intersects[obj].object.type == "Mesh" || intersects[obj].object.type == "1")
+				{
+					check_mesh = 1;
+					if (INTERSECTED != intersects[obj].object) {
+						if (INTERSECTED) INTERSECTED.material.emissive.setHex(INTERSECTED.currentHex);
+						INTERSECTED = intersects[obj].object;
+						INTERSECTED.currentHex = INTERSECTED.material.emissive.getHex();
+						INTERSECTED.material.emissive.setHex(0xff0000);
+					break;
+					}
 		}
-	} else {
-		if (INTERSECTED) INTERSECTED.material.emissive.setHex(INTERSECTED.currentHex);
+	} 
+	if (check_mesh == 0) {
+		if (INTERSECTED) 
+			INTERSECTED.material.emissive.setHex(INTERSECTED.currentHex);
 		INTERSECTED = null;
 	}
+	render();
 }
 
 var type = 3,
