@@ -11,7 +11,7 @@ import {
 } from '../js/TeapotBufferGeometry.js';
 
 var cameraPersp, cameraOrtho, currentCamera;
-var scene, renderer, control, orbit, mesh, raycaster, light, PointLightHelper;
+var scene, renderer, control, orbit, mesh, raycaster, light, PointLightHelper, meshplan;
 var Material = new THREE.MeshBasicMaterial({
 	color: '#F5F5F5',
 });
@@ -275,23 +275,16 @@ function SetPointLight() {
 			const planeSize = 400;
 
 			const loader = new THREE.TextureLoader();
-			const texture = loader.load('https://threejsfundamentals.org/threejs/resources/images/checker.png');
-			texture.wrapS = THREE.RepeatWrapping;
-			texture.wrapT = THREE.RepeatWrapping;
-			texture.magFilter = THREE.NearestFilter;
-			const repeats = planeSize / 2;
-			texture.repeat.set(repeats, repeats);
 
 			const planeGeo = new THREE.PlaneBufferGeometry(planeSize, planeSize);
 			const planeMat = new THREE.MeshPhongMaterial({
-				map: texture,
 				side: THREE.DoubleSide,
 			});
-			const mesh = new THREE.Mesh(planeGeo, planeMat);
-			mesh.receiveShadow = true;
-			mesh.rotation.x = Math.PI * -.5;
-			mesh.position.y += 0.5;
-			scene.add(mesh);
+			meshplan = new THREE.Mesh(planeGeo, planeMat);
+			meshplan.receiveShadow = true;
+			meshplan.rotation.x = Math.PI * -.5;
+			meshplan.position.y += 0.5;
+			scene.add(meshplan);
 		}
 
 		const color = '#FFFFFF';
@@ -320,6 +313,7 @@ function RemovePointLight() {
 
 	scene.remove(light);
 	scene.remove(PointLightHelper);
+	scene.remove(meshplan);
 
 	if (type == 3 || type == 4) {
 		SetMaterial(type);
@@ -342,7 +336,7 @@ function onDocumentMouseDown(event) {
 	if (intersects.length > 0) {
 		var obj;
 		for (obj in intersects) {
-			if (intersects[obj].object.type == "Mesh") {
+			if (intersects[obj].object.name == "mesh1") {
 				check_obj = 1;
 				control_transform(intersects[obj].object);
 				break;
