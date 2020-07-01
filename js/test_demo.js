@@ -11,7 +11,7 @@ import {
 } from '../js/TeapotBufferGeometry.js';
 
 var cameraPersp, cameraOrtho, currentCamera;
-var scene, renderer, control, orbit, mesh, raycaster, light, PointLightHelper;
+var scene, renderer, control, orbit, mesh, raycaster, light, PointLightHelper, meshplan;
 var Material = new THREE.MeshBasicMaterial({
 	color: '#F5F5F5',
 });
@@ -36,7 +36,8 @@ function init() {
 	scene.background = new THREE.Color('#343A40');
 
 	// Grid
-	scene.add(new THREE.GridHelper(400, 50, '#A3BAC3', '#A3BAC3'));
+	const grid = new THREE.GridHelper(400, 50, '#A3BAC3', '#A3BAC3');
+	scene.add(grid);
 
 	// Coordinate axes
 	// scene.add(new THREE.AxesHelper(100));
@@ -53,10 +54,14 @@ function init() {
 
 	raycaster = new THREE.Raycaster();
 
-	renderer = new THREE.WebGLRenderer();
-	renderer.setPixelRatio(window.devicePixelRatio);
-	renderer.setSize(window.innerWidth, window.innerHeight);
-	document.getElementById("rendering").appendChild(renderer.domElement);
+	{
+		renderer = new THREE.WebGLRenderer();
+		renderer.setPixelRatio(window.devicePixelRatio);
+		renderer.setSize(window.innerWidth, window.innerHeight);
+		renderer.shadowMap.enabled = true;
+		renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+		document.getElementById("rendering").appendChild(renderer.domElement);
+	}
 
 	// check when the browser size has changed and adjust the camera accordingly
 	window.addEventListener('resize', function () {
@@ -97,6 +102,8 @@ function CloneMesh(dummy_mesh) {
 	mesh.position.set(dummy_mesh.position.x, dummy_mesh.position.y, dummy_mesh.position.z);
 	mesh.rotation.set(dummy_mesh.rotation._x, dummy_mesh.rotation._y, dummy_mesh.rotation._z);
 	mesh.scale.set(dummy_mesh.scale.x, dummy_mesh.scale.y, dummy_mesh.scale.z);
+	mesh.castShadow = true;
+	mesh.receiveShadow = true;
 	scene.add(mesh);
 	control_transform(mesh);
 }
@@ -104,7 +111,6 @@ function CloneMesh(dummy_mesh) {
 function SetMaterial(material_id) {
 	mesh = scene.getObjectByName("mesh1");
 	light = scene.getObjectByName("pl1");
-	console.log("M", light);
 
 	type = material_id;
 
@@ -196,6 +202,8 @@ function AddGeo(mesh_id) {
 			break;
 	}
 	mesh.name = "mesh1";
+	mesh.castShadow = true;
+	mesh.receiveShadow = true;
 
 	scene.add(mesh);
 	control_transform(mesh);
@@ -263,12 +271,30 @@ function SetPointLight() {
 	light = scene.getObjectByName("pl1");
 
 	if (!light) {
+		{
+			const planeSize = 400;
+
+			const loader = new THREE.TextureLoader();
+
+			const planeGeo = new THREE.PlaneBufferGeometry(planeSize, planeSize);
+			const planeMat = new THREE.MeshPhongMaterial({
+				side: THREE.DoubleSide,
+			});
+			meshplan = new THREE.Mesh(planeGeo, planeMat);
+			meshplan.receiveShadow = true;
+			meshplan.rotation.x = Math.PI * -.5;
+			meshplan.position.y += 0.5;
+			scene.add(meshplan);
+		}
+
 		const color = '#FFFFFF';
 		const intensity = 2;
 		light = new THREE.PointLight(color, intensity);
-		light.position.set(0, 70, 0);
 		light.name = "pl1";
+		light.castShadow = true;
+		light.position.set(0, 70, 70);
 		scene.add(light);
+
 		control_transform(light);
 		if (type == 3 || type == 4) {
 			SetMaterial(type);
@@ -277,15 +303,17 @@ function SetPointLight() {
 		PointLightHelper = new THREE.PointLightHelper(light);
 		PointLightHelper.name = "plh1";
 		scene.add(PointLightHelper);
+
 		render();
 	}
 }
 window.SetPointLight = SetPointLight;
 
 function RemovePointLight() {
-	
+
 	scene.remove(light);
 	scene.remove(PointLightHelper);
+	scene.remove(meshplan);
 
 	if (type == 3 || type == 4) {
 		SetMaterial(type);
@@ -308,7 +336,7 @@ function onDocumentMouseDown(event) {
 	if (intersects.length > 0) {
 		var obj;
 		for (obj in intersects) {
-			if (intersects[obj].object.type == "Mesh") {
+			if (intersects[obj].object.name == "mesh1") {
 				check_obj = 1;
 				control_transform(intersects[obj].object);
 				break;
@@ -326,11 +354,11 @@ function onDocumentMouseDown(event) {
 }
 
 var id_animation;
-function animation(id){
+
+function animation(id) {
 	cancelAnimationFrame(id_animation);
 	mesh.rotation.set(0, 0, 0);
-	switch(id)
-	{
+	switch (id) {
 		case 1:
 			animation1();
 			break;
@@ -344,17 +372,19 @@ function animation(id){
 }
 window.animation = animation;
 
-function animation1(){
+function animation1() {
 	mesh.rotation.x += 0.01;
 	render();
 	id_animation = requestAnimationFrame(animation1);
 }
-function animation2(){
+
+function animation2() {
 	mesh.rotation.y += 0.01;
 	render();
 	id_animation = requestAnimationFrame(animation2);
 }
-function animation3(){
+
+function animation3() {
 	mesh.rotation.x += Math.PI / 180;
 	mesh.rotation.y += Math.PI / 180;
 	mesh.rotation.z += Math.PI / 180
