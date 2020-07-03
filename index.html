@@ -5,12 +5,12 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>Three.js Tutorial</title>
-	<link rel="stylesheet" href="css/style.css" type="text/css">
 	<link rel="stylesheet" href="css/bootstrap.min.css" type="text/css">
+	<link rel="stylesheet" href="css/style.css" type="text/css">
 </head>
 
 <body>
-	<nav class="navbar navbar-expand-lg fixed-top navbar-dark bg-dark shadow p-2">
+	<nav class="navbar navbar-expand-lg fixed-top navbar-dark bg-dark shadow p-2" style="font-size: 1.5rem;">
 		<a class="navbar-brand pl-5 font-weight-bold text-light" href=" #">T E A M B</a>
 		<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
 			aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
@@ -91,7 +91,7 @@
 	<div>
 		<div class="d-flex">
 			<div>
-				<div class="transform col-1 ml-3">
+				<div class="transform col-1 ml-3 p-2">
 					<button type="button" class="btn btn-light shadow" onclick="EventTranslate();">
 						<svg class="bi bi-arrows-move" width="1em" height="1em" viewBox="0 0 16 16" fill="currentColor"
 							xmlns="http://www.w3.org/2000/svg">
@@ -109,7 +109,7 @@
 					</button>
 				</div>
 
-				<div class="transform col-1 ml-3">
+				<div class="transform col-1 ml-3 p-2">
 					<button type="button" class="btn btn-light shadow" onclick="EventRotate();">
 						<svg class="bi bi-arrow-repeat" width="1em" height="1em" viewBox="0 0 16 16" fill="currentColor"
 							xmlns="http://www.w3.org/2000/svg">
@@ -121,7 +121,7 @@
 					</button>
 				</div>
 
-				<div class="transform col-1 ml-3">
+				<div class="transform col-1 ml-3 p-2">
 					<button type="button" class="btn btn-light shadow" onclick="EventScale();">
 						<svg class="bi bi-arrows-fullscreen" width="1em" height="1em" viewBox="0 0 16 16"
 							fill="currentColor" xmlns="http://www.w3.org/2000/svg">
@@ -140,9 +140,9 @@
 				</div>
 			</div>
 
-			<div class="ml-auto w-25">
-				<div class="transform mr-4">
-					<div class="d-flex font-weight-bold text-light">
+			<div class="ml-auto">
+				<div class="control" id="my-gui-container">
+					<!-- <div class="d-flex font-weight-bold text-light">
 						<span class="mr-auto valueSpanFOV"></span>
 						<div class="w-75">
 							<input type="range" class="custom-range ml-3" id="customRangeFOV" min="0" max="180"
@@ -152,7 +152,7 @@
 					<div class="d-flex font-weight-bold text-light">
 						<span class="mr-auto valueSpanNear"></span>
 						<div class="w-75">
-							<input type="range" class="custom-range ml-3" id="customRangeNear" min="0" max="10"
+							<input type="range" class="custom-range ml-3" id="customRangeNear" min="0" max="100"
 								value="0.01" step="0.01" autocomplete="off">
 						</div>
 					</div>
@@ -162,7 +162,7 @@
 							<input type="range" class="custom-range ml-3" id="customRangeFar" min="100" max="99999"
 								value="2000" autocomplete="off">
 						</div>
-					</div>
+					</div> -->
 				</div>
 			</div>
 		</div>
@@ -176,8 +176,8 @@
 	</script>
 	<script src="js/bootstrap.min.js"></script>
 
-	<script type="module" src="js/test_demo.js"></script>
-	<!-- <script type="module" src="js/test_demo_2.js"></script> -->
+	<!-- <script type="module" src="js/test_demo.js"></script> -->
+	<script type="module" src="js/test_demo_2.js"></script>
 	<!-- <script type="module" src="./js/render.js"></script>	 -->
 
 	<script>

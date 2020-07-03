@@ -12,15 +12,17 @@ import {
 	GUI
 } from '../js/dat.gui.module.js';
 
+
 var cameraPersp, cameraOrtho, currentCamera;
-var scene, renderer, control, orbit, mesh, raycaster, light, PointLightHelper;
+var scene, renderer, control, orbit, mesh, raycaster, light, PointLightHelper, meshplane, gui;
 var Material = new THREE.MeshBasicMaterial({
 	color: '#F5F5F5',
 });
 Material.needsUpdate = true;
 var texture;
 var mouse = new THREE.Vector2();
-var type = 3;
+var type = 3,
+	hasLight = false;
 
 var BoxGeometry = new THREE.BoxGeometry(50, 50, 50, 20, 20, 20);
 var SphereGeometry = new THREE.SphereGeometry(30, 60, 60);
@@ -38,7 +40,8 @@ function init() {
 	scene.background = new THREE.Color('#343A40');
 
 	// Grid
-	scene.add(new THREE.GridHelper(400, 50, '#A3BAC3', '#A3BAC3'));
+	const grid = new THREE.GridHelper(400, 50, '#A3BAC3', '#A3BAC3');
+	scene.add(grid);
 
 	// Coordinate axes
 	// scene.add(new THREE.AxesHelper(100));
@@ -55,10 +58,22 @@ function init() {
 
 	raycaster = new THREE.Raycaster();
 
-	renderer = new THREE.WebGLRenderer();
-	renderer.setPixelRatio(window.devicePixelRatio);
-	renderer.setSize(window.innerWidth, window.innerHeight);
-	document.getElementById("rendering").appendChild(renderer.domElement);
+	{
+		renderer = new THREE.WebGLRenderer();
+		renderer.setPixelRatio(window.devicePixelRatio);
+		renderer.setSize(window.innerWidth, window.innerHeight);
+		renderer.shadowMap.enabled = true;
+		renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+		document.getElementById("rendering").appendChild(renderer.domElement);
+	}
+
+	{
+		gui = new GUI({
+			autoPlace: false
+		});
+		var customContainer = document.getElementById('my-gui-container');
+		customContainer.appendChild(gui.domElement);
+	}
 
 	// check when the browser size has changed and adjust the camera accordingly
 	window.addEventListener('resize', function () {
@@ -99,6 +114,8 @@ function CloneMesh(dummy_mesh) {
 	mesh.position.set(dummy_mesh.position.x, dummy_mesh.position.y, dummy_mesh.position.z);
 	mesh.rotation.set(dummy_mesh.rotation._x, dummy_mesh.rotation._y, dummy_mesh.rotation._z);
 	mesh.scale.set(dummy_mesh.scale.x, dummy_mesh.scale.y, dummy_mesh.scale.z);
+	mesh.castShadow = true;
+	mesh.receiveShadow = true;
 	scene.add(mesh);
 	control_transform(mesh);
 }
@@ -106,7 +123,6 @@ function CloneMesh(dummy_mesh) {
 function SetMaterial(material_id) {
 	mesh = scene.getObjectByName("mesh1");
 	light = scene.getObjectByName("pl1");
-	console.log("M", light);
 
 	type = material_id;
 
@@ -198,6 +214,8 @@ function AddGeo(mesh_id) {
 			break;
 	}
 	mesh.name = "mesh1";
+	mesh.castShadow = true;
+	mesh.receiveShadow = true;
 
 	scene.add(mesh);
 	control_transform(mesh);
@@ -265,29 +283,46 @@ function SetPointLight() {
 	light = scene.getObjectByName("pl1");
 
 	if (!light) {
+		{
+			const planeSize = 400;
+			const planeGeo = new THREE.PlaneBufferGeometry(planeSize, planeSize);
+			const planeMat = new THREE.MeshPhongMaterial({
+				side: THREE.DoubleSide,
+			});
+			meshplane = new THREE.Mesh(planeGeo, planeMat);
+			meshplane.receiveShadow = true;
+			meshplane.rotation.x = Math.PI * -.5;
+			meshplane.position.y += 1;
+			scene.add(meshplane);
+		}
+
 		const color = '#FFFFFF';
 		const intensity = 2;
 		light = new THREE.PointLight(color, intensity);
-		light.position.set(0, 70, 0);
 		light.name = "pl1";
+		light.castShadow = true;
+		light.position.set(0, 70, 70);
 		scene.add(light);
+
 		control_transform(light);
 		if (type == 3 || type == 4) {
 			SetMaterial(type);
 		}
 
-		PointLightHelper = new THREE.PointLightHelper(light);
-		PointLightHelper.name = "plh1";
+		PointLightHelper = new THREE.PointLightHelper(light, 5);
 		scene.add(PointLightHelper);
+
 		render();
 	}
 }
 window.SetPointLight = SetPointLight;
 
 function RemovePointLight() {
-
+	// console.log("before remove light", light);
 	scene.remove(light);
+	// console.log("after remove light", light);
 	scene.remove(PointLightHelper);
+	scene.remove(meshplane);
 
 	if (type == 3 || type == 4) {
 		SetMaterial(type);
@@ -310,7 +345,7 @@ function onDocumentMouseDown(event) {
 	if (intersects.length > 0) {
 		var obj;
 		for (obj in intersects) {
-			if (intersects[obj].object.type == "Mesh") {
+			if (intersects[obj].object.name == "mesh1") {
 				check_obj = 1;
 				control_transform(intersects[obj].object);
 				break;
@@ -369,4 +404,28 @@ function animation3() {
 function render() {
 	renderer.render(scene, currentCamera);
 	// console.log(scene.children);
+	InitGUIControls();
+}
+
+function InitGUIControls() {
+	class ColorGUIHelper {
+		constructor(object, prop) {
+			this.object = object;
+			console.log(this.object)
+			this.prop = prop;
+		}
+		get value() {
+			return `#${this.object[this.prop].getHexString()}`;
+		}
+		set value(hexString) {
+			this.object[this.prop].set(hexString);
+			render();
+		}
+	}
+
+	light = scene.getObjectByName("pl1");
+	if (light && hasLight == false) {
+		hasLight = true;
+		gui.addColor(new ColorGUIHelper(light, 'color'), 'value').name('color');
+	}
 }
