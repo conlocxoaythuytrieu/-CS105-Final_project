@@ -173,6 +173,7 @@ function addMesh(mesh_id) {
 	mesh.material = Material;
 	scene.add(mesh);
 	control_transform(mesh, "cm_1");
+	setMaterial(3);
 	render();
 }
 window.addMesh = addMesh;
