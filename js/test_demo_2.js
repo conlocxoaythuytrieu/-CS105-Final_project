@@ -25,14 +25,51 @@ var type = 3,
 	hasLight = false;
 
 var BoxGeometry = new THREE.BoxGeometry(50, 50, 50, 20, 20, 20);
+BoxGeometry.name = "Box"
 var SphereGeometry = new THREE.SphereGeometry(30, 60, 60);
+SphereGeometry.name = "Sphere"
 var ConeGeometry = new THREE.ConeGeometry(20, 60, 50, 20);
+ConeGeometry.name = "Cone"
 var CylinderGeometry = new THREE.CylinderGeometry(20, 20, 40, 50, 20);
+CylinderGeometry.name = "Cylinder"
 var TorusGeometry = new THREE.TorusGeometry(20, 5, 20, 100);
+TorusGeometry.name = "Torus"
 var TeapotGeometry = new TeapotBufferGeometry(20, 8);
+TeapotGeometry.name = "Teapot"
+var Geometries = {
+	Box: BoxGeometry,
+	Sphere: SphereGeometry,
+	Cone: ConeGeometry,
+	Cylinder: CylinderGeometry,
+	Torus: TorusGeometry,
+	Teapot: TeapotGeometry
+}
+
+var Meshes = {},
+	PointMeshes = {};
 
 init();
 render();
+
+function addMeshes(geo, material) {
+	const dummy_mesh = new THREE.Mesh(Geometries[geo], material);
+	dummy_mesh.name = "m_1";
+	dummy_mesh.castShadow = true;
+	dummy_mesh.receiveShadow = true;
+	Meshes[geo] = dummy_mesh;
+}
+
+function addPointMeshes(geo) {
+	const dummy_mesh = new THREE.Points(Geometries[geo], new THREE.PointsMaterial({
+		color: '#F5F5F5',
+		sizeAttenuation: false,
+		size: 1,
+	}));
+	dummy_mesh.name = "pm_1";
+	dummy_mesh.castShadow = true;
+	dummy_mesh.receiveShadow = true;
+	PointMeshes[geo] = dummy_mesh;
+}
 
 function init() {
 	// Scene
@@ -97,74 +134,80 @@ function init() {
 	control.addEventListener('dragging-changed', function (event) {
 		orbit.enabled = !event.value;
 	});
-}
 
-function setTexture(url) {
-	mesh = scene.getObjectByName("mesh1");
-	if (mesh) {
-		texture = new THREE.TextureLoader().load(url, render);
-		texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
-		SetMaterial(4);
+	{
+		for (const geo in Geometries) {
+			addMeshes(geo, Material);
+			addPointMeshes(geo);
+		}
 	}
 }
-window.setTexture = setTexture;
 
-function CloneMesh(dummy_mesh) {
-	mesh.name = dummy_mesh.name;
-	mesh.position.set(dummy_mesh.position.x, dummy_mesh.position.y, dummy_mesh.position.z);
-	mesh.rotation.set(dummy_mesh.rotation._x, dummy_mesh.rotation._y, dummy_mesh.rotation._z);
-	mesh.scale.set(dummy_mesh.scale.x, dummy_mesh.scale.y, dummy_mesh.scale.z);
-	mesh.castShadow = true;
-	mesh.receiveShadow = true;
+function addMesh(mesh_id) {
+	mesh = scene.getObjectByName("m_1");
+	scene.remove(mesh);
+	mesh = scene.getObjectByName("pm_1");
+	scene.remove(mesh);
+
+	switch (mesh_id) {
+		case 1:
+			mesh = Meshes["Box"];
+			break;
+		case 2:
+			mesh = Meshes["Sphere"];
+			break;
+		case 3:
+			mesh = Meshes["Cone"];
+			break;
+		case 4:
+			mesh = Meshes["Cylinder"];
+			break;
+		case 5:
+			mesh = Meshes["Torus"];
+			break;
+		case 6:
+			mesh = Meshes["Teapot"];
+			break;
+	}
+
+	mesh.material = Material;
 	scene.add(mesh);
-	control_transform(mesh);
+	control_transform(mesh, "cm_1");
+	render();
 }
+window.addMesh = addMesh;
 
-function SetMaterial(material_id) {
-	mesh = scene.getObjectByName("mesh1");
-	light = scene.getObjectByName("pl1");
-
+function setMaterial(material_id) {
+	mesh = scene.getObjectByName("m_1");
 	type = material_id;
 
 	if (mesh) {
-		const dummy_mesh = mesh.clone();
-		scene.remove(mesh);
-
 		switch (material_id) {
 			case 1:
-				Material = new THREE.PointsMaterial({
-					color: '#F5F5F5',
-					sizeAttenuation: false,
-					size: 1,
-				});
-
-				mesh = new THREE.Points(dummy_mesh.geometry, Material);
-				CloneMesh(dummy_mesh);
-
+				scene.remove(mesh);
+				scene.remove(scene.getObjectByName("cm_1"));
+				const pre_mesh_geo = mesh.geometry.name;
+				mesh = PointMeshes[pre_mesh_geo];
+				scene.add(mesh);
+				control_transform(mesh, "cp_1");
 				break;
 			case 2:
 				Material = new THREE.MeshBasicMaterial({
 					color: '#F5F5F5',
 					wireframe: true,
 				});
-
-				mesh = new THREE.Mesh(dummy_mesh.geometry, Material);
-				CloneMesh(dummy_mesh);
-
+				mesh.material = Material;
 				break;
 			case 3:
 				if (!light)
 					Material = new THREE.MeshBasicMaterial({
-						color: '#FFFFFF',
+						color: '#0000FF',
 					});
 				else
 					Material = new THREE.MeshPhongMaterial({
-						color: '#FFFFFF',
+						color: '#0000FF',
 					});
-
-				mesh = new THREE.Mesh(dummy_mesh.geometry, Material);
-				CloneMesh(dummy_mesh);
-
+				mesh.material = Material;
 				break;
 			case 4:
 				if (!light)
@@ -177,65 +220,39 @@ function SetMaterial(material_id) {
 						map: texture,
 						transparent: true
 					});
-
-				mesh = new THREE.Mesh(dummy_mesh.geometry, Material);
-				CloneMesh(dummy_mesh);
-
+				mesh.material = Material;
 				break;
 		}
 
 		render();
 	}
 }
-window.SetMaterial = SetMaterial;
+window.setMaterial = setMaterial;
 
-function AddGeo(mesh_id) {
-	mesh = scene.getObjectByName("mesh1");
-	scene.remove(mesh);
-
-	switch (mesh_id) {
-		case 1:
-			mesh = new THREE.Mesh(BoxGeometry, Material);
-			break;
-		case 2:
-			mesh = new THREE.Mesh(SphereGeometry, Material);
-			break;
-		case 3:
-			mesh = new THREE.Mesh(ConeGeometry, Material);
-			break;
-		case 4:
-			mesh = new THREE.Mesh(CylinderGeometry, Material);
-			break;
-		case 5:
-			mesh = new THREE.Mesh(TorusGeometry, Material);
-			break;
-		case 6:
-			mesh = new THREE.Mesh(TeapotGeometry, Material);
-			break;
+function setTexture(url) {
+	mesh = scene.getObjectByName("m_1");
+	if (mesh) {
+		texture = new THREE.TextureLoader().load(url, render);
+		texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+		setMaterial(4);
 	}
-	mesh.name = "mesh1";
-	mesh.castShadow = true;
-	mesh.receiveShadow = true;
-
-	scene.add(mesh);
-	control_transform(mesh);
-
-	render();
 }
-window.AddGeo = AddGeo;
+window.setTexture = setTexture;
 
-function control_transform(mesh) {
+function control_transform(mesh, name) {
 	control.attach(mesh);
+	control.name = name;
 	scene.add(control);
+
 	window.addEventListener('keydown', function (event) {
 		switch (event.keyCode) {
-			case 87: // W
+			case 84: // T
 				EventTranslate();
 				break;
-			case 69: // E
+			case 82: // R
 				EventRotate();
 				break;
-			case 82: // R
+			case 83: // S
 				EventScale();
 				break;
 		}
@@ -280,7 +297,6 @@ window.EventScale = EventScale;
 
 function SetPointLight() {
 	// RemovePointLight();
-	light = scene.getObjectByName("pl1");
 
 	if (!light) {
 		{
@@ -296,21 +312,23 @@ function SetPointLight() {
 			scene.add(meshplane);
 		}
 
-		const color = '#FFFFFF';
-		const intensity = 2;
-		light = new THREE.PointLight(color, intensity);
-		light.name = "pl1";
-		light.castShadow = true;
-		light.position.set(0, 70, 70);
-		scene.add(light);
+		{
+			const color = '#FFFFFF';
+			const intensity = 2;
+			light = new THREE.PointLight(color, intensity);
+			light.name = "pl_1";
+			light.castShadow = true;
+			light.position.set(0, 70, 70);
+			scene.add(light);
 
-		control_transform(light);
-		if (type == 3 || type == 4) {
-			SetMaterial(type);
+			control_transform(light, "cl_1");
+			if (type == 3 || type == 4) {
+				setMaterial(type);
+			}
+
+			PointLightHelper = new THREE.PointLightHelper(light, 5);
+			scene.add(PointLightHelper);
 		}
-
-		PointLightHelper = new THREE.PointLightHelper(light, 5);
-		scene.add(PointLightHelper);
 
 		render();
 	}
@@ -320,12 +338,13 @@ window.SetPointLight = SetPointLight;
 function RemovePointLight() {
 	// console.log("before remove light", light);
 	scene.remove(light);
+	scene.remove(scene.getObjectByName("cl_1"));
 	// console.log("after remove light", light);
 	scene.remove(PointLightHelper);
 	scene.remove(meshplane);
 
 	if (type == 3 || type == 4) {
-		SetMaterial(type);
+		setMaterial(type);
 	}
 
 	render();
@@ -345,7 +364,7 @@ function onDocumentMouseDown(event) {
 	if (intersects.length > 0) {
 		var obj;
 		for (obj in intersects) {
-			if (intersects[obj].object.name == "mesh1") {
+			if (intersects[obj].object.name == "m_1") {
 				check_obj = 1;
 				control_transform(intersects[obj].object);
 				break;
@@ -403,7 +422,7 @@ function animation3() {
 
 function render() {
 	renderer.render(scene, currentCamera);
-	// console.log(scene.children);
+	console.log("scene.children", scene.children);
 	InitGUIControls();
 }
 
@@ -411,7 +430,7 @@ function InitGUIControls() {
 	class ColorGUIHelper {
 		constructor(object, prop) {
 			this.object = object;
-			console.log(this.object)
+			// console.log(this.object)
 			this.prop = prop;
 		}
 		get value() {
@@ -423,7 +442,7 @@ function InitGUIControls() {
 		}
 	}
 
-	light = scene.getObjectByName("pl1");
+	light = scene.getObjectByName("pl_1");
 	if (light && hasLight == false) {
 		hasLight = true;
 		gui.addColor(new ColorGUIHelper(light, 'color'), 'value').name('color');

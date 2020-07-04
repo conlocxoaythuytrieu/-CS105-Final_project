@@ -26,12 +26,12 @@
 						Geometry
 					</a>
 					<div class="dropdown-menu" aria-labelledby="navbarDropdown">
-						<a class="dropdown-item" href="#" onclick="AddGeo(1);">Box</a>
-						<a class="dropdown-item" href="#" onclick="AddGeo(2);">Sphere</a>
-						<a class="dropdown-item" href="#" onclick="AddGeo(3);">Cone</a>
-						<a class="dropdown-item" href="#" onclick="AddGeo(4);">Cylinder</a>
-						<a class="dropdown-item" href="#" onclick="AddGeo(5);">Torus</a>
-						<a class="dropdown-item" href="#" onclick="AddGeo(6);">Teapot</a>
+						<a class="dropdown-item" href="#" onclick="addMesh(1);">Box</a>
+						<a class="dropdown-item" href="#" onclick="addMesh(2);">Sphere</a>
+						<a class="dropdown-item" href="#" onclick="addMesh(3);">Cone</a>
+						<a class="dropdown-item" href="#" onclick="addMesh(4);">Cylinder</a>
+						<a class="dropdown-item" href="#" onclick="addMesh(5);">Torus</a>
+						<a class="dropdown-item" href="#" onclick="addMesh(6);">Teapot</a>
 					</div>
 				</li>
 
@@ -41,9 +41,9 @@
 						Surface
 					</a>
 					<div class="dropdown-menu" aria-labelledby="navbarDropdown">
-						<a class="dropdown-item" href="#" onclick="SetMaterial(1);">Point</a>
-						<a class="dropdown-item" href="#" onclick="SetMaterial(2);">Line</a>
-						<a class="dropdown-item" href="#" onclick="SetMaterial(3);">Solid</a>
+						<a class="dropdown-item" href="#" onclick="setMaterial(1);">Point</a>
+						<a class="dropdown-item" href="#" onclick="setMaterial(2);">Line</a>
+						<a class="dropdown-item" href="#" onclick="setMaterial(3);">Solid</a>
 						<input type="file" accept="image/*" id="texture_img" style="display: none;"
 							onchange="setTexture(window.URL.createObjectURL(this.files[0]))" />
 						<a class="dropdown-item" href="#" name="button" onclick="thisFileUpload();">Select texture</a>
