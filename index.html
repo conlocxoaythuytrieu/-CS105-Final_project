@@ -64,16 +64,6 @@
 				<li class="nav-item dropdown">
 					<a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button"
 						data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-						Camera
-					</a>
-					<div class="dropdown-menu" aria-labelledby="navbarDropdown">
-						<a class="dropdown-item" href="#">Orthographic Camera</a>
-						<a class="dropdown-item" href="#">Perspective Camera</a>
-					</div>
-				</li>
-				<li class="nav-item dropdown">
-					<a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button"
-						data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
 						Animation
 					</a>
 					<div class="dropdown-menu" aria-labelledby="navbarDropdown">
@@ -142,27 +132,6 @@
 
 			<div class="ml-auto">
 				<div class="control" id="my-gui-container">
-					<!-- <div class="d-flex font-weight-bold text-light">
-						<span class="mr-auto valueSpanFOV"></span>
-						<div class="w-75">
-							<input type="range" class="custom-range ml-3" id="customRangeFOV" min="0" max="180"
-								value="75" autocomplete="off">
-						</div>
-					</div>
-					<div class="d-flex font-weight-bold text-light">
-						<span class="mr-auto valueSpanNear"></span>
-						<div class="w-75">
-							<input type="range" class="custom-range ml-3" id="customRangeNear" min="0" max="100"
-								value="0.01" step="0.01" autocomplete="off">
-						</div>
-					</div>
-					<div class="d-flex font-weight-bold text-light">
-						<span class="mr-auto valueSpanFar"></span>
-						<div class="w-75">
-							<input type="range" class="custom-range ml-3" id="customRangeFar" min="100" max="99999"
-								value="2000" autocomplete="off">
-						</div>
-					</div> -->
 				</div>
 			</div>
 		</div>
@@ -181,34 +150,6 @@
 	<!-- <script type="module" src="./js/render.js"></script>	 -->
 
 	<script>
-		$(document).ready(function () {
-			const $valueSpanFOV = $('.valueSpanFOV');
-			const $valueSpanNear = $('.valueSpanNear');
-			const $valueSpanFar = $('.valueSpanFar');
-
-			const $valueFOV = $('#customRangeFOV');
-			const $valueNear = $('#customRangeNear');
-			const $valueFar = $('#customRangeFar');
-
-			$valueSpanFOV.html("FOV: " + $valueFOV.val());
-			$valueFOV.on('input change', () => {
-				$valueSpanFOV.html("FOV: " + $valueFOV.val());
-				setFOV($valueFOV.val());
-			});
-
-			$valueSpanNear.html("Near: " + $valueNear.val());
-			$valueNear.on('input change', () => {
-				$valueSpanNear.html("Near: " + $valueNear.val());
-				setNear($valueNear.val());
-			});
-
-			$valueSpanFar.html("Far: " + $valueFar.val());
-			$valueFar.on('input change', () => {
-				$valueSpanFar.html("Far: " + $valueFar.val());
-				setFar($valueFar.val());
-			});
-		});
-
 		function thisFileUpload() {
 			document.getElementById("texture_img").click();
 		};

@@ -1,28 +1,29 @@
-import * as THREE from '../js/three.module.js';
+import * as THREE from "../js/three.module.js";
 import {
 	OrbitControls
-} from '../js/OrbitControls.js';
+} from "../js/OrbitControls.js";
 import {
 	TransformControls
-} from '../js/TransformControls.js';
+} from "../js/TransformControls.js";
 import {
 	TeapotBufferGeometry
-} from '../js/TeapotBufferGeometry.js';
+} from "../js/TeapotBufferGeometry.js";
 import {
 	GUI
-} from '../js/dat.gui.module.js';
+} from "../js/dat.gui.module.js";
 
 
 var cameraPersp, cameraOrtho, currentCamera;
 var scene, renderer, control, orbit, mesh, raycaster, light, PointLightHelper, meshplane, gui;
 var Material = new THREE.MeshBasicMaterial({
-	color: '#F5F5F5',
+	color: "#F5F5F5",
 });
 Material.needsUpdate = true;
 var texture;
 var mouse = new THREE.Vector2();
 var type = 3,
-	hasLight = false;
+	hasLight = false,
+	hasCamera = false;
 
 var BoxGeometry = new THREE.BoxGeometry(50, 50, 50, 20, 20, 20);
 BoxGeometry.name = "Box"
@@ -61,7 +62,7 @@ function addMeshes(geo, material) {
 
 function addPointMeshes(geo) {
 	const dummy_mesh = new THREE.Points(Geometries[geo], new THREE.PointsMaterial({
-		color: '#F5F5F5',
+		color: "#F5F5F5",
 		sizeAttenuation: false,
 		size: 1,
 	}));
@@ -74,10 +75,10 @@ function addPointMeshes(geo) {
 function init() {
 	// Scene
 	scene = new THREE.Scene();
-	scene.background = new THREE.Color('#343A40');
+	scene.background = new THREE.Color("#343A40");
 
 	// Grid
-	const grid = new THREE.GridHelper(400, 50, '#A3BAC3', '#A3BAC3');
+	const grid = new THREE.GridHelper(400, 50, "#A3BAC3", "#A3BAC3");
 	scene.add(grid);
 
 	// Coordinate axes
@@ -85,9 +86,13 @@ function init() {
 
 	// Camera
 	{
-		const aspect = window.innerWidth / window.innerHeight;
-		cameraPersp = new THREE.PerspectiveCamera(75, aspect, 0.01, 2000);
-		// cameraOrtho = new THREE.OrthographicCamera(-600 * aspect, 600 * aspect, 600, -600, 0.01, 30000);
+		const fov = 75;
+		const aspectRatio = window.innerWidth / window.innerHeight;
+		const near = 0.1;
+		const far = 2000;
+		const viewSize = 600;
+		cameraPersp = new THREE.PerspectiveCamera(fov, aspectRatio, near, far);
+		cameraOrtho = new THREE.OrthographicCamera(-aspectRatio * viewSize / 2, -aspectRatio * viewSize / 2, viewSize / 2, -viewSize / 2, near, far);
 		currentCamera = cameraPersp;
 		currentCamera.position.set(1, 50, 100);
 		currentCamera.lookAt(0, 0, 0);
@@ -108,12 +113,12 @@ function init() {
 		gui = new GUI({
 			autoPlace: false
 		});
-		var customContainer = document.getElementById('my-gui-container');
+		var customContainer = document.getElementById("my-gui-container");
 		customContainer.appendChild(gui.domElement);
 	}
 
 	// check when the browser size has changed and adjust the camera accordingly
-	window.addEventListener('resize', function () {
+	window.addEventListener("resize", function () {
 		const WIDTH = window.innerWidth;
 		const HEIGHT = window.innerHeight;
 
@@ -126,12 +131,12 @@ function init() {
 
 	orbit = new OrbitControls(currentCamera, renderer.domElement);
 	orbit.update();
-	orbit.addEventListener('change', render);
+	orbit.addEventListener("change", render);
 
 	control = new TransformControls(currentCamera, renderer.domElement);
-	control.addEventListener('change', render);
+	control.addEventListener("change", render);
 
-	control.addEventListener('dragging-changed', function (event) {
+	control.addEventListener("dragging-changed", function (event) {
 		orbit.enabled = !event.value;
 	});
 
@@ -173,6 +178,7 @@ function addMesh(mesh_id) {
 	mesh.material = Material;
 	scene.add(mesh);
 	control_transform(mesh, "cm_1");
+	setMaterial(3);
 	render();
 }
 window.addMesh = addMesh;
@@ -193,7 +199,7 @@ function setMaterial(material_id) {
 				break;
 			case 2:
 				Material = new THREE.MeshBasicMaterial({
-					color: '#F5F5F5',
+					color: "#F5F5F5",
 					wireframe: true,
 				});
 				mesh.material = Material;
@@ -201,11 +207,11 @@ function setMaterial(material_id) {
 			case 3:
 				if (!light)
 					Material = new THREE.MeshBasicMaterial({
-						color: '#0000FF',
+						color: "#F5F5F5",
 					});
 				else
 					Material = new THREE.MeshPhongMaterial({
-						color: '#0000FF',
+						color: "#F5F5F5",
 					});
 				mesh.material = Material;
 				break;
@@ -244,7 +250,7 @@ function control_transform(mesh, name) {
 	control.name = name;
 	scene.add(control);
 
-	window.addEventListener('keydown', function (event) {
+	window.addEventListener("keydown", function (event) {
 		switch (event.keyCode) {
 			case 84: // T
 				EventTranslate();
@@ -259,26 +265,10 @@ function control_transform(mesh, name) {
 	});
 }
 
-function setFOV(value) {
-	currentCamera.fov = Number(value);
+function updateCamera() {
 	currentCamera.updateProjectionMatrix();
 	render();
 }
-window.setFOV = setFOV;
-
-function setFar(value) {
-	currentCamera.far = Number(value);
-	currentCamera.updateProjectionMatrix();
-	render();
-}
-window.setFar = setFar;
-
-function setNear(value) {
-	currentCamera.near = Number(value);
-	currentCamera.updateProjectionMatrix();
-	render();
-}
-window.setNear = setNear;
 
 function EventTranslate() {
 	control.setMode("translate");
@@ -313,15 +303,15 @@ function SetPointLight() {
 		}
 
 		{
-			const color = '#FFFFFF';
+			const color = "#FFFFFF";
 			const intensity = 2;
 			light = new THREE.PointLight(color, intensity);
 			light.name = "pl_1";
 			light.castShadow = true;
 			light.position.set(0, 70, 70);
 			scene.add(light);
-
 			control_transform(light, "cl_1");
+
 			if (type == 3 || type == 4) {
 				setMaterial(type);
 			}
@@ -351,7 +341,7 @@ function RemovePointLight() {
 }
 window.RemovePointLight = RemovePointLight;
 
-document.getElementById("rendering").addEventListener('mousedown', onDocumentMouseDown, false);
+document.getElementById("rendering").addEventListener("mousedown", onDocumentMouseDown, false);
 
 function onDocumentMouseDown(event) {
 	event.preventDefault();
@@ -422,15 +412,40 @@ function animation3() {
 
 function render() {
 	renderer.render(scene, currentCamera);
-	console.log("scene.children", scene.children);
+	// console.log("scene.children", scene.children);
 	InitGUIControls();
 }
 
 function InitGUIControls() {
+	class MinMaxGUIHelper {
+		constructor(object, minprop, maxprop) {
+			this.object = object;
+			this.minprop = minprop;
+			this.maxprop = maxprop;
+		}
+		get min() {
+			return this.object[this.minprop];
+		}
+		set min(v) {
+			this.object[this.minprop] = v;
+		}
+		get max() {
+			return this.object[this.maxprop];
+		}
+		set max(v) {
+			this.object[this.maxprop] = v;
+		}
+	}
+
+	class CameraGUIHelper {
+		constructor(object) {
+			this.object = object;
+		}
+	}
+
 	class ColorGUIHelper {
 		constructor(object, prop) {
 			this.object = object;
-			// console.log(this.object)
 			this.prop = prop;
 		}
 		get value() {
@@ -442,9 +457,18 @@ function InitGUIControls() {
 		}
 	}
 
-	light = scene.getObjectByName("pl_1");
-	if (light && hasLight == false) {
+	if (light && !hasLight) {
 		hasLight = true;
-		gui.addColor(new ColorGUIHelper(light, 'color'), 'value').name('color');
+		gui.addColor(new ColorGUIHelper(light, "color"), "value").name("Light Color");
+	}
+
+	if (!hasCamera) {
+		hasCamera = true;
+		const folder = gui.addFolder('Camera');
+		folder.open();
+		folder.add(currentCamera, "fov", 1, 180).name("FOV").onChange(updateCamera);
+		const minMaxGUIHelper = new MinMaxGUIHelper(currentCamera, "near", "far");
+		folder.add(minMaxGUIHelper, "min", 0.1, 100, 0.1).name("Near").onChange(updateCamera);
+		folder.add(minMaxGUIHelper, "max", 200, 10000, 10).name("Far").onChange(updateCamera);
 	}
 }
