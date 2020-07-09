@@ -19,7 +19,7 @@ var mouse = new THREE.Vector2();
 var type = 3,
 	hasLight = false,
 	hasCamera = false,
-	light_switch = false;
+	LightSwitch = false;
 
 var BoxGeometry = new THREE.BoxGeometry(50, 50, 50, 20, 20, 20);
 BoxGeometry.name = "Box"
@@ -31,8 +31,8 @@ var CylinderGeometry = new THREE.CylinderGeometry(30, 30, 70, 50, 20);
 CylinderGeometry.name = "Cylinder"
 var TorusGeometry = new THREE.TorusGeometry(20, 5, 20, 100);
 TorusGeometry.name = "Torus"
-var TorusKnotGeometry = new THREE.TorusKnotGeometry(40, 10, 70, 10, 3, 4);
-TorusGeometry.name = "Knot"
+var TorusKnotGeometry = new THREE.TorusKnotGeometry(40, 10, 70, 10);
+TorusKnotGeometry.name = "Knot"
 var TeapotGeometry = new TeapotBufferGeometry(20, 8);
 TeapotGeometry.name = "Teapot"
 var TetrahedronGeometry = new THREE.TetrahedronGeometry(30);
@@ -71,6 +71,7 @@ var Materials = {
 	Basic: BasicMaterial,
 	Phong: PhongMaterial
 };
+console.log("B", Materials);
 
 
 var Meshes = {},
@@ -233,6 +234,8 @@ window.addMesh = addMesh;
 function setMaterial(material_id) {
 	del();
 
+	// console.log(mesh)
+	// console.log(point_mesh)
 	type = material_id;
 	let material;
 
@@ -259,30 +262,32 @@ function setMaterial(material_id) {
 					mesh.material = Materials["Basic"];
 					mesh.material.wireframe = true;
 					mesh.material.map = null;
+					console.log("L", Materials);
 					break;
 				case 3:
-					if (light_switch) {
-						// console.log("1a")
+					if (LightSwitch) {
+						console.log("1a")
 						mesh.material = Materials["Phong"];
-						mesh.material.map = null;
 					} else {
-						// console.log("1b")
+						console.log("1b")
 						mesh.material = Materials["Basic"];
-						mesh.material.wireframe = false;
-						mesh.material.map = null;
 					}
+					mesh.material.wireframe = false;
+					mesh.material.map = null;
+					console.log("S",Materials);
 					break;
 				case 4:
-					if (light_switch) {
-						// console.log("2a")
+					if (LightSwitch) {
+						console.log("2a")
 						mesh.material = Materials["Phong"];
-						mesh.material.map = texture;
 					} else {
-						// console.log("2b")
+						console.log("2b")
 						mesh.material = Materials["Basic"];
-						mesh.material.wireframe = false;
-						mesh.material.map = texture;
 					}
+					mesh.material.wireframe = false;
+					mesh.material.map = texture;
+					mesh.material.transparent = true;
+					console.log("T", Materials);
 					break;
 			}
 			scene.add(mesh);
@@ -296,6 +301,7 @@ window.setMaterial = setMaterial;
 
 function setTexture(url) {
 	mesh = scene.getObjectByName("m_1");
+
 	if (mesh) {
 		texture = new THREE.TextureLoader().load(url, render);
 		texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
@@ -347,8 +353,8 @@ window.EventScale = EventScale;
 function SetPointLight() {
 	// RemovePointLight();
 
-	light_switch = true;
-	if (light_switch) {
+	LightSwitch = true;
+	if (LightSwitch) {
 		{
 			const planeSize = 400;
 			const planeGeo = new THREE.PlaneBufferGeometry(planeSize, planeSize);
@@ -388,7 +394,7 @@ function SetPointLight() {
 window.SetPointLight = SetPointLight;
 
 function RemovePointLight() {
-	light_switch = false;
+	LightSwitch = false;
 	// console.log("before remove light", light);
 	scene.remove(light);
 	scene.remove(scene.getObjectByName("cl_1"));
@@ -399,7 +405,7 @@ function RemovePointLight() {
 	if (type == 3 || type == 4) {
 		setMaterial(type);
 	}
-
+	gui.remove(colorGUI);
 	render();
 }
 window.RemovePointLight = RemovePointLight;
@@ -479,6 +485,8 @@ function render() {
 	InitGUIControls();
 }
 
+var colorGUI;
+
 function InitGUIControls() {
 	class MinMaxGUIHelper {
 		constructor(object, minprop, maxprop) {
@@ -520,9 +528,9 @@ function InitGUIControls() {
 		}
 	}
 
-	if (light_switch && !hasLight) {
+	if (LightSwitch && !hasLight) {
 		hasLight = true;
-		gui.addColor(new ColorGUIHelper(light, "color"), "value").name("Light Color");
+		colorGUI = gui.addColor(new ColorGUIHelper(light, "color"), "value").name("Light Color");
 	}
 
 	if (!hasCamera) {
