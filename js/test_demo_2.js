@@ -162,6 +162,7 @@ function init() {
 }
 
 function del() {
+	console.log(1)
 	mesh = scene.getObjectByName("m_1");
 	scene.remove(mesh);
 	scene.remove(scene.getObjectByName("cm_1"));
@@ -206,51 +207,60 @@ function setMaterial(material_id) {
 
 	type = material_id;
 	let material;
-	// console.log(mesh);
-	// console.log(point_mesh);
 
 	if (mesh || point_mesh) {
-		switch (material_id) {
-			case 1:
-				const pre_mesh_geo = mesh.geometry.name;
-				mesh = PointMeshes[pre_mesh_geo];
-				scene.add(mesh);
-				control_transform(mesh, "cp_1");
-				break;
-			case 2:
-				mesh.material = Materials["Basic"];
-				mesh.material.wireframe = true;
-				mesh.material.map = null;
-				break;
-			case 3:
-				if (lighton) {
-					console.log("1a")
-					mesh.material = Materials["Phong"];
-					mesh.material.map = null;
-				} else {
-					console.log("1b")
+		if (material_id == 1) {
+			const pre_mesh_geo = mesh.geometry.name;
+			point_mesh = PointMeshes[pre_mesh_geo];
+			point_mesh.position.copy(mesh.position);
+			point_mesh.rotation.copy(mesh.rotation);
+			point_mesh.scale.copy(mesh.scale);
+
+			scene.add(point_mesh);
+			control_transform(point_mesh, "cp_1");
+		} else {
+			if (point_mesh) {
+				const pre_pmesh_geo = point_mesh.geometry.name;
+				mesh = Meshes[pre_pmesh_geo];
+				mesh.position.copy(point_mesh.position);
+				mesh.rotation.copy(point_mesh.rotation);
+				mesh.scale.copy(point_mesh.scale);
+			}
+			switch (material_id) {
+				case 2:
 					mesh.material = Materials["Basic"];
-					mesh.material.wireframe = false;
+					mesh.material.wireframe = true;
 					mesh.material.map = null;
-				}
-				break;
-			case 4:
-				if (lighton) {
-					console.log("2a")
-					mesh.material = Materials["Phong"];
-					mesh.material.map = texture;
-				} else {
-					console.log("2b")
-					mesh.material = Materials["Basic"];
-					mesh.material.wireframe = false;
-					mesh.material.map = texture;
-				}
-				break;
+					break;
+				case 3:
+					if (lighton) {
+						// console.log("1a")
+						mesh.material = Materials["Phong"];
+						mesh.material.map = null;
+					} else {
+						// console.log("1b")
+						mesh.material = Materials["Basic"];
+						mesh.material.wireframe = false;
+						mesh.material.map = null;
+					}
+					break;
+				case 4:
+					if (lighton) {
+						// console.log("2a")
+						mesh.material = Materials["Phong"];
+						mesh.material.map = texture;
+					} else {
+						// console.log("2b")
+						mesh.material = Materials["Basic"];
+						mesh.material.wireframe = false;
+						mesh.material.map = texture;
+					}
+					break;
+			}
+			scene.add(mesh);
+			control_transform(mesh, "cm_1");
 		}
 
-		scene.add(mesh);
-		// console.log(mesh)
-		control_transform(mesh, "cm_1");
 		render();
 	}
 }
@@ -308,7 +318,7 @@ window.EventScale = EventScale;
 
 function SetPointLight() {
 	// RemovePointLight();
-	
+
 	lighton = true;
 	if (lighton) {
 		{
@@ -437,7 +447,7 @@ function animation3() {
 
 function render() {
 	renderer.render(scene, currentCamera);
-	// console.log("scene.children", scene.children);
+	console.log("scene.children", scene.children);
 	InitGUIControls();
 }
 
