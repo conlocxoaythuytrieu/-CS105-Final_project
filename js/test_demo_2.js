@@ -14,16 +14,13 @@ import {
 
 
 var cameraPersp, cameraOrtho, currentCamera;
-var scene, renderer, control, orbit, mesh, raycaster, light, PointLightHelper, meshplane, gui;
-var Material = new THREE.MeshBasicMaterial({
-	color: "#F5F5F5",
-});
-Material.needsUpdate = true;
+var scene, renderer, control, orbit, mesh, point_mesh, raycaster, light, PointLightHelper, meshplane, gui;
 var texture;
 var mouse = new THREE.Vector2();
 var type = 3,
 	hasLight = false,
-	hasCamera = false;
+	hasCamera = false,
+	lighton = false;
 
 var BoxGeometry = new THREE.BoxGeometry(50, 50, 50, 20, 20, 20);
 BoxGeometry.name = "Box"
@@ -45,6 +42,22 @@ var Geometries = {
 	Torus: TorusGeometry,
 	Teapot: TeapotGeometry
 }
+
+var BasicMaterial = new THREE.MeshBasicMaterial({
+	color: "#F5F500"
+});
+BasicMaterial.name = "Basic";
+BasicMaterial.needsUpdate = true;
+var PhongMaterial = new THREE.MeshPhongMaterial({
+	color: "#F500F5"
+});
+PhongMaterial.name = "Phong";
+PhongMaterial.needsUpdate = true;
+var Materials = {
+	Basic: BasicMaterial,
+	Phong: PhongMaterial
+};
+
 
 var Meshes = {},
 	PointMeshes = {};
@@ -142,17 +155,23 @@ function init() {
 
 	{
 		for (const geo in Geometries) {
-			addMeshes(geo, Material);
+			addMeshes(geo, Materials["Basic"]);
 			addPointMeshes(geo);
 		}
 	}
 }
 
-function addMesh(mesh_id) {
+function del() {
 	mesh = scene.getObjectByName("m_1");
 	scene.remove(mesh);
-	mesh = scene.getObjectByName("pm_1");
-	scene.remove(mesh);
+	scene.remove(scene.getObjectByName("cm_1"));
+	point_mesh = scene.getObjectByName("pm_1");
+	scene.remove(point_mesh);
+	scene.remove(scene.getObjectByName("cp_1"));
+}
+
+function addMesh(mesh_id) {
+	del();
 
 	switch (mesh_id) {
 		case 1:
@@ -175,61 +194,63 @@ function addMesh(mesh_id) {
 			break;
 	}
 
-	mesh.material = Material;
 	scene.add(mesh);
-	control_transform(mesh, "cm_1");
 	setMaterial(3);
+	control_transform(mesh, "cm_1");
 	render();
 }
 window.addMesh = addMesh;
 
 function setMaterial(material_id) {
-	mesh = scene.getObjectByName("m_1");
-	type = material_id;
+	del();
 
-	if (mesh) {
+	type = material_id;
+	let material;
+	// console.log(mesh);
+	// console.log(point_mesh);
+
+	if (mesh || point_mesh) {
 		switch (material_id) {
 			case 1:
-				scene.remove(mesh);
-				scene.remove(scene.getObjectByName("cm_1"));
 				const pre_mesh_geo = mesh.geometry.name;
 				mesh = PointMeshes[pre_mesh_geo];
 				scene.add(mesh);
 				control_transform(mesh, "cp_1");
 				break;
 			case 2:
-				Material = new THREE.MeshBasicMaterial({
-					color: "#F5F5F5",
-					wireframe: true,
-				});
-				mesh.material = Material;
+				mesh.material = Materials["Basic"];
+				mesh.material.wireframe = true;
+				mesh.material.map = null;
 				break;
 			case 3:
-				if (!light)
-					Material = new THREE.MeshBasicMaterial({
-						color: "#F5F5F5",
-					});
-				else
-					Material = new THREE.MeshPhongMaterial({
-						color: "#F5F5F5",
-					});
-				mesh.material = Material;
+				if (lighton) {
+					console.log("1a")
+					mesh.material = Materials["Phong"];
+					mesh.material.map = null;
+				} else {
+					console.log("1b")
+					mesh.material = Materials["Basic"];
+					mesh.material.wireframe = false;
+					mesh.material.map = null;
+				}
 				break;
 			case 4:
-				if (!light)
-					Material = new THREE.MeshBasicMaterial({
-						map: texture,
-						transparent: true
-					});
-				else
-					Material = new THREE.MeshLambertMaterial({
-						map: texture,
-						transparent: true
-					});
-				mesh.material = Material;
+				if (lighton) {
+					console.log("2a")
+					mesh.material = Materials["Phong"];
+					mesh.material.map = texture;
+				} else {
+					console.log("2b")
+					mesh.material = Materials["Basic"];
+					mesh.material.wireframe = false;
+					mesh.material.map = texture;
+				}
 				break;
 		}
 
+		scene.add(mesh);
+		// console.log(mesh)
+		control_transform(mesh, "cm_1");
 		render();
 	}
 }
@@ -287,8 +308,9 @@ window.EventScale = EventScale;
 
 function SetPointLight() {
 	// RemovePointLight();
-
-	if (!light) {
+	
+	lighton = true;
+	if (lighton) {
 		{
 			const planeSize = 400;
 			const planeGeo = new THREE.PlaneBufferGeometry(planeSize, planeSize);
@@ -320,12 +342,15 @@ function SetPointLight() {
 			scene.add(PointLightHelper);
 		}
 
-		render();
+	} else {
+		scene.add(light);
 	}
+	render();
 }
 window.SetPointLight = SetPointLight;
 
 function RemovePointLight() {
+	lighton = false;
 	// console.log("before remove light", light);
 	scene.remove(light);
 	scene.remove(scene.getObjectByName("cl_1"));
@@ -457,7 +482,7 @@ function InitGUIControls() {
 		}
 	}
 
-	if (light && !hasLight) {
+	if (lighton && !hasLight) {
 		hasLight = true;
 		gui.addColor(new ColorGUIHelper(light, "color"), "value").name("Light Color");
 	}
@@ -471,4 +496,16 @@ function InitGUIControls() {
 		folder.add(minMaxGUIHelper, "min", 0.1, 100, 0.1).name("Near").onChange(updateCamera);
 		folder.add(minMaxGUIHelper, "max", 200, 10000, 10).name("Far").onChange(updateCamera);
 	}
+
+	// const position = currentCamera.position.clone();
+
+	// currentCamera = currentCamera.isPerspectiveCamera ? cameraOrtho : cameraPersp;
+	// currentCamera.position.copy(position);
+
+	// orbit.object = currentCamera;
+	// control.camera = currentCamera;
+
+	// currentCamera.lookAt(orbit.target.x, orbit.target.y, orbit.target.z);
+	// onWindowResize();
+	// break;
 }
