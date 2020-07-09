@@ -12,7 +12,6 @@ import {
 	GUI
 } from "../js/dat.gui.module.js";
 
-
 var cameraPersp, cameraOrtho, currentCamera;
 var scene, renderer, control, orbit, mesh, point_mesh, raycaster, light, PointLightHelper, meshplane, gui;
 var texture;
@@ -20,27 +19,42 @@ var mouse = new THREE.Vector2();
 var type = 3,
 	hasLight = false,
 	hasCamera = false,
-	lighton = false;
+	light_switch = false;
 
 var BoxGeometry = new THREE.BoxGeometry(50, 50, 50, 20, 20, 20);
 BoxGeometry.name = "Box"
-var SphereGeometry = new THREE.SphereGeometry(30, 60, 60);
+var SphereGeometry = new THREE.SphereGeometry(30, 50, 50);
 SphereGeometry.name = "Sphere"
-var ConeGeometry = new THREE.ConeGeometry(20, 60, 50, 20);
+var ConeGeometry = new THREE.ConeGeometry(30, 70, 50, 20);
 ConeGeometry.name = "Cone"
-var CylinderGeometry = new THREE.CylinderGeometry(20, 20, 40, 50, 20);
+var CylinderGeometry = new THREE.CylinderGeometry(30, 30, 70, 50, 20);
 CylinderGeometry.name = "Cylinder"
 var TorusGeometry = new THREE.TorusGeometry(20, 5, 20, 100);
 TorusGeometry.name = "Torus"
+var TorusKnotGeometry = new THREE.TorusKnotGeometry(40, 10, 70, 10, 3, 4);
+TorusGeometry.name = "Knot"
 var TeapotGeometry = new TeapotBufferGeometry(20, 8);
 TeapotGeometry.name = "Teapot"
+var TetrahedronGeometry = new THREE.TetrahedronGeometry(30);
+TetrahedronGeometry.name = "Tetra"
+var OctahedronGeometry = new THREE.OctahedronGeometry(30);
+OctahedronGeometry.name = "Octa"
+var DodecahedronGeometry = new THREE.DodecahedronGeometry(30);
+DodecahedronGeometry.name = "Dodeca"
+var IcosahedronGeometry = new THREE.IcosahedronGeometry(30);
+IcosahedronGeometry.name = "Icosa"
 var Geometries = {
 	Box: BoxGeometry,
 	Sphere: SphereGeometry,
 	Cone: ConeGeometry,
 	Cylinder: CylinderGeometry,
 	Torus: TorusGeometry,
-	Teapot: TeapotGeometry
+	Knot: TorusKnotGeometry,
+	Teapot: TeapotGeometry,
+	Tetra: TetrahedronGeometry, // 4 sides
+	Octa: OctahedronGeometry, // 8 sides
+	Dodeca: DodecahedronGeometry, // 12 sides
+	Icosa: IcosahedronGeometry, // 20 sides
 }
 
 var BasicMaterial = new THREE.MeshBasicMaterial({
@@ -77,7 +91,7 @@ function addPointMeshes(geo) {
 	const dummy_mesh = new THREE.Points(Geometries[geo], new THREE.PointsMaterial({
 		color: "#F5F5F5",
 		sizeAttenuation: false,
-		size: 1,
+		size: 2,
 	}));
 	dummy_mesh.name = "pm_1";
 	dummy_mesh.castShadow = true;
@@ -162,7 +176,6 @@ function init() {
 }
 
 function del() {
-	console.log(1)
 	mesh = scene.getObjectByName("m_1");
 	scene.remove(mesh);
 	scene.remove(scene.getObjectByName("cm_1"));
@@ -191,7 +204,22 @@ function addMesh(mesh_id) {
 			mesh = Meshes["Torus"];
 			break;
 		case 6:
+			mesh = Meshes["Knot"];
+			break;
+		case 7:
 			mesh = Meshes["Teapot"];
+			break;
+		case 8:
+			mesh = Meshes["Tetra"];
+			break;
+		case 9:
+			mesh = Meshes["Octa"];
+			break;
+		case 10:
+			mesh = Meshes["Dodeca"];
+			break;
+		case 11:
+			mesh = Meshes["Icosa"];
 			break;
 	}
 
@@ -233,7 +261,7 @@ function setMaterial(material_id) {
 					mesh.material.map = null;
 					break;
 				case 3:
-					if (lighton) {
+					if (light_switch) {
 						// console.log("1a")
 						mesh.material = Materials["Phong"];
 						mesh.material.map = null;
@@ -245,7 +273,7 @@ function setMaterial(material_id) {
 					}
 					break;
 				case 4:
-					if (lighton) {
+					if (light_switch) {
 						// console.log("2a")
 						mesh.material = Materials["Phong"];
 						mesh.material.map = texture;
@@ -319,8 +347,8 @@ window.EventScale = EventScale;
 function SetPointLight() {
 	// RemovePointLight();
 
-	lighton = true;
-	if (lighton) {
+	light_switch = true;
+	if (light_switch) {
 		{
 			const planeSize = 400;
 			const planeGeo = new THREE.PlaneBufferGeometry(planeSize, planeSize);
@@ -360,7 +388,7 @@ function SetPointLight() {
 window.SetPointLight = SetPointLight;
 
 function RemovePointLight() {
-	lighton = false;
+	light_switch = false;
 	// console.log("before remove light", light);
 	scene.remove(light);
 	scene.remove(scene.getObjectByName("cl_1"));
@@ -447,7 +475,7 @@ function animation3() {
 
 function render() {
 	renderer.render(scene, currentCamera);
-	console.log("scene.children", scene.children);
+	// console.log("scene.children", scene.children);
 	InitGUIControls();
 }
 
@@ -492,7 +520,7 @@ function InitGUIControls() {
 		}
 	}
 
-	if (lighton && !hasLight) {
+	if (light_switch && !hasLight) {
 		hasLight = true;
 		gui.addColor(new ColorGUIHelper(light, "color"), "value").name("Light Color");
 	}
