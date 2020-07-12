@@ -247,7 +247,6 @@ function setMaterial(material_id) {
 	type = material_id;
 	pre_material != 1 ? scene.remove(mesh) : scene.remove(point);
 	gui.remove(ObjColorGUI);
-
 	switch (material_id) {
 		case 1:
 			point.material = PointMaterial;
@@ -256,7 +255,7 @@ function setMaterial(material_id) {
 			mesh.material = BasicMaterial;
 			mesh.castShadow = false;
 			mesh.material.wireframe = true;
-			mesh.material.map = null;
+			// mesh.material.map = null;
 			break;
 		case 3:
 			if (!LightSwitch)
@@ -265,7 +264,7 @@ function setMaterial(material_id) {
 				mesh.material = PhongMaterial;
 			mesh.castShadow = true;
 			mesh.material.wireframe = false;
-			mesh.material.map = null;
+			// mesh.material.map = null;
 			break;
 		case 4:
 			if (!LightSwitch)
@@ -281,8 +280,11 @@ function setMaterial(material_id) {
 		default:
 			break;
 	}
-
-
+	if(material_id != 4)
+	{
+		mesh.material.map = null;
+		mesh.material.needsUpdate = true;
+	}
 	if (pre_material != 1 && material_id == 1) {
 		point.position.copy(mesh.position);
 		point.rotation.copy(mesh.rotation);
