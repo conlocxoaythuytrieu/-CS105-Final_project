@@ -1,49 +1,78 @@
-import * as THREE from '../js/three.module.js';
+import * as THREE from "../js/three.module.js";
 import {
 	OrbitControls
-} from '../js/OrbitControls.js';
+} from "../js/OrbitControls.js";
 import {
 	TransformControls
-} from '../js/TransformControls.js';
+} from "../js/TransformControls.js";
 import {
 	TeapotBufferGeometry
-} from '../js/TeapotBufferGeometry.js';
+} from "../js/TeapotBufferGeometry.js";
 import {
 	GUI
-} from '../js/dat.gui.module.js';
-
+} from "../js/dat.gui.module.js";
 
 var cameraPersp, cameraOrtho, currentCamera;
-var scene, renderer, control, orbit, mesh, raycaster, light, PointLightHelper, meshplane, gui;
-var Material = new THREE.MeshBasicMaterial({
-	color: '#F5F5F5',
-});
-Material.needsUpdate = true;
+var scene, renderer, control, orbit, mesh, point_mesh, raycaster, light, PointLightHelper, meshplane, gui;
 var texture;
 var mouse = new THREE.Vector2();
 var type = 3,
-	hasLight = false;
+	hasLight = false,
+	hasCamera = false,
+	LightSwitch = false;
 
 var BoxGeometry = new THREE.BoxGeometry(50, 50, 50, 20, 20, 20);
 BoxGeometry.name = "Box"
-var SphereGeometry = new THREE.SphereGeometry(30, 60, 60);
+var SphereGeometry = new THREE.SphereGeometry(30, 50, 50);
 SphereGeometry.name = "Sphere"
-var ConeGeometry = new THREE.ConeGeometry(20, 60, 50, 20);
+var ConeGeometry = new THREE.ConeGeometry(30, 70, 50, 20);
 ConeGeometry.name = "Cone"
-var CylinderGeometry = new THREE.CylinderGeometry(20, 20, 40, 50, 20);
+var CylinderGeometry = new THREE.CylinderGeometry(30, 30, 70, 50, 20);
 CylinderGeometry.name = "Cylinder"
 var TorusGeometry = new THREE.TorusGeometry(20, 5, 20, 100);
 TorusGeometry.name = "Torus"
+var TorusKnotGeometry = new THREE.TorusKnotGeometry(40, 10, 70, 10);
+TorusKnotGeometry.name = "Knot"
 var TeapotGeometry = new TeapotBufferGeometry(20, 8);
 TeapotGeometry.name = "Teapot"
+var TetrahedronGeometry = new THREE.TetrahedronGeometry(30);
+TetrahedronGeometry.name = "Tetra"
+var OctahedronGeometry = new THREE.OctahedronGeometry(30);
+OctahedronGeometry.name = "Octa"
+var DodecahedronGeometry = new THREE.DodecahedronGeometry(30);
+DodecahedronGeometry.name = "Dodeca"
+var IcosahedronGeometry = new THREE.IcosahedronGeometry(30);
+IcosahedronGeometry.name = "Icosa"
 var Geometries = {
 	Box: BoxGeometry,
 	Sphere: SphereGeometry,
 	Cone: ConeGeometry,
 	Cylinder: CylinderGeometry,
 	Torus: TorusGeometry,
-	Teapot: TeapotGeometry
+	Knot: TorusKnotGeometry,
+	Teapot: TeapotGeometry,
+	Tetra: TetrahedronGeometry, // 4 sides
+	Octa: OctahedronGeometry, // 8 sides
+	Dodeca: DodecahedronGeometry, // 12 sides
+	Icosa: IcosahedronGeometry, // 20 sides
 }
+
+var BasicMaterial = new THREE.MeshBasicMaterial({
+	color: "#F5F500"
+});
+BasicMaterial.name = "Basic";
+BasicMaterial.needsUpdate = true;
+var PhongMaterial = new THREE.MeshPhongMaterial({
+	color: "#F500F5"
+});
+PhongMaterial.name = "Phong";
+PhongMaterial.needsUpdate = true;
+var Materials = {
+	Basic: BasicMaterial,
+	Phong: PhongMaterial
+};
+console.log("B", Materials);
+
 
 var Meshes = {},
 	PointMeshes = {};
@@ -61,9 +90,9 @@ function addMeshes(geo, material) {
 
 function addPointMeshes(geo) {
 	const dummy_mesh = new THREE.Points(Geometries[geo], new THREE.PointsMaterial({
-		color: '#F5F5F5',
+		color: "#F5F5F5",
 		sizeAttenuation: false,
-		size: 1,
+		size: 2,
 	}));
 	dummy_mesh.name = "pm_1";
 	dummy_mesh.castShadow = true;
@@ -74,10 +103,10 @@ function addPointMeshes(geo) {
 function init() {
 	// Scene
 	scene = new THREE.Scene();
-	scene.background = new THREE.Color('#343A40');
+	scene.background = new THREE.Color("#343A40");
 
 	// Grid
-	const grid = new THREE.GridHelper(400, 50, '#A3BAC3', '#A3BAC3');
+	const grid = new THREE.GridHelper(400, 50, "#A3BAC3", "#A3BAC3");
 	scene.add(grid);
 
 	// Coordinate axes
@@ -85,9 +114,13 @@ function init() {
 
 	// Camera
 	{
-		const aspect = window.innerWidth / window.innerHeight;
-		cameraPersp = new THREE.PerspectiveCamera(75, aspect, 0.01, 2000);
-		// cameraOrtho = new THREE.OrthographicCamera(-600 * aspect, 600 * aspect, 600, -600, 0.01, 30000);
+		const fov = 75;
+		const aspectRatio = window.innerWidth / window.innerHeight;
+		const near = 0.1;
+		const far = 2000;
+		const viewSize = 600;
+		cameraPersp = new THREE.PerspectiveCamera(fov, aspectRatio, near, far);
+		cameraOrtho = new THREE.OrthographicCamera(-aspectRatio * viewSize / 2, -aspectRatio * viewSize / 2, viewSize / 2, -viewSize / 2, near, far);
 		currentCamera = cameraPersp;
 		currentCamera.position.set(1, 50, 100);
 		currentCamera.lookAt(0, 0, 0);
@@ -108,12 +141,12 @@ function init() {
 		gui = new GUI({
 			autoPlace: false
 		});
-		var customContainer = document.getElementById('my-gui-container');
+		var customContainer = document.getElementById("my-gui-container");
 		customContainer.appendChild(gui.domElement);
 	}
 
 	// check when the browser size has changed and adjust the camera accordingly
-	window.addEventListener('resize', function () {
+	window.addEventListener("resize", function () {
 		const WIDTH = window.innerWidth;
 		const HEIGHT = window.innerHeight;
 
@@ -126,28 +159,34 @@ function init() {
 
 	orbit = new OrbitControls(currentCamera, renderer.domElement);
 	orbit.update();
-	orbit.addEventListener('change', render);
+	orbit.addEventListener("change", render);
 
 	control = new TransformControls(currentCamera, renderer.domElement);
-	control.addEventListener('change', render);
+	control.addEventListener("change", render);
 
-	control.addEventListener('dragging-changed', function (event) {
+	control.addEventListener("dragging-changed", function (event) {
 		orbit.enabled = !event.value;
 	});
 
 	{
 		for (const geo in Geometries) {
-			addMeshes(geo, Material);
+			addMeshes(geo, Materials["Basic"]);
 			addPointMeshes(geo);
 		}
 	}
 }
 
-function addMesh(mesh_id) {
+function del() {
 	mesh = scene.getObjectByName("m_1");
 	scene.remove(mesh);
-	mesh = scene.getObjectByName("pm_1");
-	scene.remove(mesh);
+	scene.remove(scene.getObjectByName("cm_1"));
+	point_mesh = scene.getObjectByName("pm_1");
+	scene.remove(point_mesh);
+	scene.remove(scene.getObjectByName("cp_1"));
+}
+
+function addMesh(mesh_id) {
+	del();
 
 	switch (mesh_id) {
 		case 1:
@@ -166,12 +205,27 @@ function addMesh(mesh_id) {
 			mesh = Meshes["Torus"];
 			break;
 		case 6:
+			mesh = Meshes["Knot"];
+			break;
+		case 7:
 			mesh = Meshes["Teapot"];
+			break;
+		case 8:
+			mesh = Meshes["Tetra"];
+			break;
+		case 9:
+			mesh = Meshes["Octa"];
+			break;
+		case 10:
+			mesh = Meshes["Dodeca"];
+			break;
+		case 11:
+			mesh = Meshes["Icosa"];
 			break;
 	}
 
-	mesh.material = Material;
 	scene.add(mesh);
+	setMaterial(3);
 	control_transform(mesh, "cm_1");
 	setMaterial(3);
 	render();
@@ -179,50 +233,66 @@ function addMesh(mesh_id) {
 window.addMesh = addMesh;
 
 function setMaterial(material_id) {
-	mesh = scene.getObjectByName("m_1");
-	type = material_id;
+	del();
 
-	if (mesh) {
-		switch (material_id) {
-			case 1:
-				scene.remove(mesh);
-				scene.remove(scene.getObjectByName("cm_1"));
-				const pre_mesh_geo = mesh.geometry.name;
-				mesh = PointMeshes[pre_mesh_geo];
-				scene.add(mesh);
-				control_transform(mesh, "cp_1");
-				break;
-			case 2:
-				Material = new THREE.MeshBasicMaterial({
-					color: '#F5F5F5',
-					wireframe: true,
-				});
-				mesh.material = Material;
-				break;
-			case 3:
-				if (!light)
-					Material = new THREE.MeshBasicMaterial({
-						color: '#0000FF',
-					});
-				else
-					Material = new THREE.MeshPhongMaterial({
-						color: '#0000FF',
-					});
-				mesh.material = Material;
-				break;
-			case 4:
-				if (!light)
-					Material = new THREE.MeshBasicMaterial({
-						map: texture,
-						transparent: true
-					});
-				else
-					Material = new THREE.MeshLambertMaterial({
-						map: texture,
-						transparent: true
-					});
-				mesh.material = Material;
-				break;
+	// console.log(mesh)
+	// console.log(point_mesh)
+	type = material_id;
+	let material;
+
+	if (mesh || point_mesh) {
+		if (material_id == 1) {
+			const pre_mesh_geo = mesh.geometry.name;
+			point_mesh = PointMeshes[pre_mesh_geo];
+			point_mesh.position.copy(mesh.position);
+			point_mesh.rotation.copy(mesh.rotation);
+			point_mesh.scale.copy(mesh.scale);
+
+			scene.add(point_mesh);
+			control_transform(point_mesh, "cp_1");
+		} else {
+			if (point_mesh) {
+				const pre_pmesh_geo = point_mesh.geometry.name;
+				mesh = Meshes[pre_pmesh_geo];
+				mesh.position.copy(point_mesh.position);
+				mesh.rotation.copy(point_mesh.rotation);
+				mesh.scale.copy(point_mesh.scale);
+			}
+			switch (material_id) {
+				case 2:
+					mesh.material = Materials["Basic"];
+					mesh.material.wireframe = true;
+					mesh.material.map = null;
+					console.log("L", Materials);
+					break;
+				case 3:
+					if (LightSwitch) {
+						console.log("1a")
+						mesh.material = Materials["Phong"];
+					} else {
+						console.log("1b")
+						mesh.material = Materials["Basic"];
+					}
+					mesh.material.wireframe = false;
+					mesh.material.map = null;
+					console.log("S",Materials);
+					break;
+				case 4:
+					if (LightSwitch) {
+						console.log("2a")
+						mesh.material = Materials["Phong"];
+					} else {
+						console.log("2b")
+						mesh.material = Materials["Basic"];
+					}
+					mesh.material.wireframe = false;
+					mesh.material.map = texture;
+					mesh.material.transparent = true;
+					console.log("T", Materials);
+					break;
+			}
+			scene.add(mesh);
+			control_transform(mesh, "cm_1");
 		}
 
 		render();
@@ -232,6 +302,7 @@ window.setMaterial = setMaterial;
 
 function setTexture(url) {
 	mesh = scene.getObjectByName("m_1");
+
 	if (mesh) {
 		texture = new THREE.TextureLoader().load(url, render);
 		texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
@@ -245,7 +316,7 @@ function control_transform(mesh, name) {
 	control.name = name;
 	scene.add(control);
 
-	window.addEventListener('keydown', function (event) {
+	window.addEventListener("keydown", function (event) {
 		switch (event.keyCode) {
 			case 84: // T
 				EventTranslate();
@@ -260,26 +331,10 @@ function control_transform(mesh, name) {
 	});
 }
 
-function setFOV(value) {
-	currentCamera.fov = Number(value);
+function updateCamera() {
 	currentCamera.updateProjectionMatrix();
 	render();
 }
-window.setFOV = setFOV;
-
-function setFar(value) {
-	currentCamera.far = Number(value);
-	currentCamera.updateProjectionMatrix();
-	render();
-}
-window.setFar = setFar;
-
-function setNear(value) {
-	currentCamera.near = Number(value);
-	currentCamera.updateProjectionMatrix();
-	render();
-}
-window.setNear = setNear;
 
 function EventTranslate() {
 	control.setMode("translate");
@@ -299,7 +354,8 @@ window.EventScale = EventScale;
 function SetPointLight() {
 	// RemovePointLight();
 
-	if (!light) {
+	LightSwitch = true;
+	if (LightSwitch) {
 		{
 			const planeSize = 400;
 			const planeGeo = new THREE.PlaneBufferGeometry(planeSize, planeSize);
@@ -314,15 +370,15 @@ function SetPointLight() {
 		}
 
 		{
-			const color = '#FFFFFF';
+			const color = "#FFFFFF";
 			const intensity = 2;
 			light = new THREE.PointLight(color, intensity);
 			light.name = "pl_1";
 			light.castShadow = true;
 			light.position.set(0, 70, 70);
 			scene.add(light);
-
 			control_transform(light, "cl_1");
+
 			if (type == 3 || type == 4) {
 				setMaterial(type);
 			}
@@ -331,12 +387,15 @@ function SetPointLight() {
 			scene.add(PointLightHelper);
 		}
 
-		render();
+	} else {
+		scene.add(light);
 	}
+	render();
 }
 window.SetPointLight = SetPointLight;
 
 function RemovePointLight() {
+	LightSwitch = false;
 	// console.log("before remove light", light);
 	scene.remove(light);
 	scene.remove(scene.getObjectByName("cl_1"));
@@ -347,12 +406,12 @@ function RemovePointLight() {
 	if (type == 3 || type == 4) {
 		setMaterial(type);
 	}
-
+	gui.remove(colorGUI);
 	render();
 }
 window.RemovePointLight = RemovePointLight;
 
-document.getElementById("rendering").addEventListener('mousedown', onDocumentMouseDown, false);
+document.getElementById("rendering").addEventListener("mousedown", onDocumentMouseDown, false);
 
 function onDocumentMouseDown(event) {
 	event.preventDefault();
@@ -423,15 +482,42 @@ function animation3() {
 
 function render() {
 	renderer.render(scene, currentCamera);
-	console.log("scene.children", scene.children);
+	// console.log("scene.children", scene.children);
 	InitGUIControls();
 }
 
+var colorGUI;
+
 function InitGUIControls() {
+	class MinMaxGUIHelper {
+		constructor(object, minprop, maxprop) {
+			this.object = object;
+			this.minprop = minprop;
+			this.maxprop = maxprop;
+		}
+		get min() {
+			return this.object[this.minprop];
+		}
+		set min(v) {
+			this.object[this.minprop] = v;
+		}
+		get max() {
+			return this.object[this.maxprop];
+		}
+		set max(v) {
+			this.object[this.maxprop] = v;
+		}
+	}
+
+	class CameraGUIHelper {
+		constructor(object) {
+			this.object = object;
+		}
+	}
+
 	class ColorGUIHelper {
 		constructor(object, prop) {
 			this.object = object;
-			// console.log(this.object)
 			this.prop = prop;
 		}
 		get value() {
@@ -443,9 +529,30 @@ function InitGUIControls() {
 		}
 	}
 
-	light = scene.getObjectByName("pl_1");
-	if (light && hasLight == false) {
+	if (LightSwitch && !hasLight) {
 		hasLight = true;
-		gui.addColor(new ColorGUIHelper(light, 'color'), 'value').name('color');
+		colorGUI = gui.addColor(new ColorGUIHelper(light, "color"), "value").name("Light Color");
 	}
+
+	if (!hasCamera) {
+		hasCamera = true;
+		const folder = gui.addFolder('Camera');
+		folder.open();
+		folder.add(currentCamera, "fov", 1, 180).name("FOV").onChange(updateCamera);
+		const minMaxGUIHelper = new MinMaxGUIHelper(currentCamera, "near", "far");
+		folder.add(minMaxGUIHelper, "min", 0.1, 100, 0.1).name("Near").onChange(updateCamera);
+		folder.add(minMaxGUIHelper, "max", 200, 10000, 10).name("Far").onChange(updateCamera);
+	}
+
+	// const position = currentCamera.position.clone();
+
+	// currentCamera = currentCamera.isPerspectiveCamera ? cameraOrtho : cameraPersp;
+	// currentCamera.position.copy(position);
+
+	// orbit.object = currentCamera;
+	// control.camera = currentCamera;
+
+	// currentCamera.lookAt(orbit.target.x, orbit.target.y, orbit.target.z);
+	// onWindowResize();
+	// break;
 }
