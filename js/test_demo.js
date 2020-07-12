@@ -111,7 +111,6 @@ function init() {
 		});
 		var customContainer = document.getElementById("my-gui-container");
 		customContainer.appendChild(gui.domElement);
-		ObjColorGUI = gui.addColor(new ColorGUIHelper(mesh.material, "color"), "value").name("Obj Color");
 	}
 
 	// Camera
@@ -132,6 +131,8 @@ function init() {
 		folderCam.add(minMaxGUIHelper, "min", 0.1, 100, 0.1).name("Near").onChange(updateCamera);
 		folderCam.add(minMaxGUIHelper, "max", 200, 10000, 10).name("Far").onChange(updateCamera);
 	}
+	
+	ObjColorGUI = gui.addColor(new ColorGUIHelper(mesh.material, "color"), "value").name("Obj Color");
 
 	raycaster = new THREE.Raycaster();
 
@@ -245,7 +246,7 @@ window.addMesh = addMesh;
 function setMaterial(material_id) {
 	type = material_id;
 	pre_material != 1 ? scene.remove(mesh) : scene.remove(point);
-	// gui.remove(ObjColorGUI);
+	gui.remove(ObjColorGUI);
 
 	switch (material_id) {
 		case 1:
@@ -253,23 +254,18 @@ function setMaterial(material_id) {
 			break;
 		case 2:
 			mesh.material = BasicMaterial;
-			// mesh.material.color = "#F5F5F5";
 			mesh.castShadow = false;
 			mesh.material.wireframe = true;
 			mesh.material.map = null;
-			console.log(mesh.material.needsUpdate)
-			// ObjColorGUI = gui.addColor(new ColorGUIHelper(mesh.material, "color"), "value").name("Obj Color");
 			break;
 		case 3:
 			if (!LightSwitch)
 				mesh.material = BasicMaterial;
 			else
 				mesh.material = PhongMaterial;
-			// mesh.material.color = "#F5F5F5";
 			mesh.castShadow = true;
 			mesh.material.wireframe = false;
 			mesh.material.map = null;
-			// ObjColorGUI = gui.addColor(new ColorGUIHelper(mesh.material, "color"), "value").name("Obj Color");
 			break;
 		case 4:
 			if (!LightSwitch)
@@ -281,7 +277,6 @@ function setMaterial(material_id) {
 			mesh.material.map = texture;
 			mesh.material.map.needsUpdate = true;
 			mesh.material.needsUpdate = true;
-			// ObjColorGUI = gui.addColor(new ColorGUIHelper(mesh.material, "color"), "value").name("Obj Color");
 			break;
 		default:
 			break;
@@ -299,7 +294,15 @@ function setMaterial(material_id) {
 		mesh.scale.copy(point.scale);
 	}
 
-	material_id != 1 ? scene.add(mesh) : scene.add(point);
+	if (material_id != 1) {
+		mesh.material.color.set("#F5F5F5");
+		ObjColorGUI = gui.addColor(new ColorGUIHelper(mesh.material, "color"), "value").name("Obj Color");
+		scene.add(mesh);
+	} else {
+		point.material.color.set("#F5F5F5");
+		ObjColorGUI = gui.addColor(new ColorGUIHelper(point.material, "color"), "value").name("Obj Color");
+		scene.add(point);
+	}
 	pre_material = material_id;
 	render();
 }
