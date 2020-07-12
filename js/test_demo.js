@@ -21,7 +21,7 @@ var LightSwitch = false,
 	type = null,
 	pre_material = null;
 var id_animation;
-var colorGUI, folder;
+var colorGUI, cameraGUIHelper;
 
 var BoxGeometry = new THREE.BoxGeometry(50, 50, 50, 20, 20, 20);
 var SphereGeometry = new THREE.SphereGeometry(30, 50, 50);
@@ -90,14 +90,13 @@ class MinMaxGUIHelper {
 	}
 }
 
-class CameraGUIHelper {
-	constructor(object) {
-		this.object = object;
-	}
+cameraGUIHelper = {
+	orthographicCamera: false
 }
 
 init();
 render();
+var folderCam, PerspFOV, PerspNear, PerspFar, OrthoNear, OrthoFar;
 
 function init() {
 	// Scene
@@ -132,19 +131,25 @@ function init() {
 		currentCamera.position.set(1, 50, 100);
 		currentCamera.lookAt(0, 0, 0);
 
-		folder = gui.addFolder('Camera');
-		folder.open();
-		folder.add(currentCamera, "fov", 1, 180).name("FOV").onChange(updateCamera);
+		// const a = gui.add(new CameraGUIHelper(currentCamera, "type"), "type", ["PerspectiveCamera", "OrthographicCamera"]);
+		gui.add(cameraGUIHelper, "orthographicCamera").name("OrthographicCam").onChange(function (value) {
+			switchCamera(value);
+		});
+
+		folderCam = gui.addFolder("Camera");
+		folderCam.open();
+		PerspFOV = folderCam.add(currentCamera, "fov", 1, 180).name("FOV").onChange(updateCamera);
 		const minMaxGUIHelper = new MinMaxGUIHelper(currentCamera, "near", "far");
-		folder.add(minMaxGUIHelper, "min", 0.1, 100, 0.1).name("Near").onChange(updateCamera);
-		folder.add(minMaxGUIHelper, "max", 200, 10000, 10).name("Far").onChange(updateCamera);
+		PerspNear = folderCam.add(minMaxGUIHelper, "min", 0.1, 100, 0.1).name("Near").onChange(updateCamera);
+		PerspFar = folderCam.add(minMaxGUIHelper, "max", 200, 10000, 10).name("Far").onChange(updateCamera);
 	}
 
 	raycaster = new THREE.Raycaster();
 
 	{
 		renderer = new THREE.WebGLRenderer({
-			antialias: true
+			antialias: true,
+			logarithmicDepthBuffer: true
 		});
 		renderer.setPixelRatio(window.devicePixelRatio);
 		renderer.setSize(window.innerWidth, window.innerHeight);
@@ -452,5 +457,45 @@ function animation3() {
 
 function updateCamera() {
 	currentCamera.updateProjectionMatrix();
+	render();
+}
+
+function switchCamera(val) {
+	cameraGUIHelper.orthographicCamera = val;
+	const position = currentCamera.position.clone();
+
+	// currentCamera = currentCamera.isPerspectiveCamera ? cameraOrtho : cameraPersp;
+	if (cameraGUIHelper.orthographicCamera) {
+		currentCamera = cameraOrtho;
+		folderCam.remove(PerspFOV);
+		folderCam.remove(PerspNear);
+		folderCam.remove(PerspFar);
+		const minMaxGUIHelper = new MinMaxGUIHelper(currentCamera, "near", "far");
+		OrthoNear = folderCam.add(minMaxGUIHelper, "min", 0, 100, 0.1).name("Near").onChange(updateCamera);
+		OrthoFar = folderCam.add(minMaxGUIHelper, "max", 200, 10000, 10).name("Far").onChange(updateCamera);
+	} else {
+
+	}
+	currentCamera.position.copy(position);
+
+	orbit.object = currentCamera;
+	control.camera = currentCamera;
+
+	currentCamera.lookAt(orbit.target.x, orbit.target.y, orbit.target.z);
+	onWindowResize();
+}
+
+function onWindowResize() {
+	const aspect = window.innerWidth / window.innerHeight;
+
+	cameraPersp.aspect = aspect;
+	cameraPersp.updateProjectionMatrix();
+
+	cameraOrtho.left = cameraOrtho.bottom * aspect;
+	cameraOrtho.right = cameraOrtho.top * aspect;
+	cameraOrtho.updateProjectionMatrix();
+
+	renderer.setSize(window.innerWidth, window.innerHeight);
+
 	render();
 }
