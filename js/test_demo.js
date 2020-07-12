@@ -21,7 +21,7 @@ var LightSwitch = false,
 	type = null,
 	pre_material = null;
 var id_animation;
-var colorGUI, cameraGUIHelper;
+var LightColorGUI, ObjColorGUI;
 
 var BoxGeometry = new THREE.BoxGeometry(50, 50, 50, 20, 20, 20);
 var SphereGeometry = new THREE.SphereGeometry(30, 50, 50);
@@ -90,13 +90,8 @@ class MinMaxGUIHelper {
 	}
 }
 
-cameraGUIHelper = {
-	orthographicCamera: false
-}
-
 init();
 render();
-var folderCam, PerspFOV, PerspNear, PerspFar, OrthoNear, OrthoFar;
 
 function init() {
 	// Scene
@@ -116,6 +111,7 @@ function init() {
 		});
 		var customContainer = document.getElementById("my-gui-container");
 		customContainer.appendChild(gui.domElement);
+		ObjColorGUI = gui.addColor(new ColorGUIHelper(mesh.material, "color"), "value").name("Obj Color");
 	}
 
 	// Camera
@@ -124,24 +120,17 @@ function init() {
 		const aspectRatio = window.innerWidth / window.innerHeight;
 		const near = 0.1;
 		const far = 2000;
-		const viewSize = 600;
 		cameraPersp = new THREE.PerspectiveCamera(fov, aspectRatio, near, far);
-		cameraOrtho = new THREE.OrthographicCamera(-aspectRatio * viewSize / 2, -aspectRatio * viewSize / 2, viewSize / 2, -viewSize / 2, near, far);
 		currentCamera = cameraPersp;
 		currentCamera.position.set(1, 50, 100);
 		currentCamera.lookAt(0, 0, 0);
 
-		// const a = gui.add(new CameraGUIHelper(currentCamera, "type"), "type", ["PerspectiveCamera", "OrthographicCamera"]);
-		gui.add(cameraGUIHelper, "orthographicCamera").name("OrthographicCam").onChange(function (value) {
-			switchCamera(value);
-		});
-
-		folderCam = gui.addFolder("Camera");
+		const folderCam = gui.addFolder("Camera");
 		folderCam.open();
-		PerspFOV = folderCam.add(currentCamera, "fov", 1, 180).name("FOV").onChange(updateCamera);
+		folderCam.add(currentCamera, "fov", 1, 180).name("FOV").onChange(updateCamera);
 		const minMaxGUIHelper = new MinMaxGUIHelper(currentCamera, "near", "far");
-		PerspNear = folderCam.add(minMaxGUIHelper, "min", 0.1, 100, 0.1).name("Near").onChange(updateCamera);
-		PerspFar = folderCam.add(minMaxGUIHelper, "max", 200, 10000, 10).name("Far").onChange(updateCamera);
+		folderCam.add(minMaxGUIHelper, "min", 0.1, 100, 0.1).name("Near").onChange(updateCamera);
+		folderCam.add(minMaxGUIHelper, "max", 200, 10000, 10).name("Far").onChange(updateCamera);
 	}
 
 	raycaster = new THREE.Raycaster();
@@ -256,6 +245,8 @@ window.addMesh = addMesh;
 function setMaterial(material_id) {
 	type = material_id;
 	pre_material != 1 ? scene.remove(mesh) : scene.remove(point);
+	gui.remove(ObjColorGUI);
+
 	switch (material_id) {
 		case 1:
 			point.material = PointMaterial;
@@ -272,6 +263,7 @@ function setMaterial(material_id) {
 				mesh.material = PhongMaterial;
 			mesh.castShadow = true;
 			mesh.material.wireframe = false;
+			ObjColorGUI = gui.addColor(new ColorGUIHelper(mesh.material, "color"), "value").name("Obj Color");
 			break;
 		case 4:
 			if (!LightSwitch)
@@ -281,6 +273,7 @@ function setMaterial(material_id) {
 			mesh.castShadow = true;
 			mesh.material.map = texture;
 			mesh.material.map.needsUpdate = true;
+			ObjColorGUI = gui.addColor(new ColorGUIHelper(mesh.material, "color"), "value").name("Obj Color");
 			break;
 		default:
 			break;
@@ -321,8 +314,7 @@ function SetPointLight() {
 
 		if (type == 3 || type == 4)
 			setMaterial(type);
-
-		colorGUI = gui.addColor(new ColorGUIHelper(light, "color"), "value").name("Light Color");
+		LightColorGUI = gui.addColor(new ColorGUIHelper(light, "color"), "value").name("Light Color");
 		render();
 	}
 }
@@ -342,7 +334,7 @@ function RemovePointLight() {
 		if (type == 3 || type == 4)
 			setMaterial(type);
 
-		gui.remove(colorGUI);
+		gui.remove(LightColorGUI);
 		gui.remove(folder);
 		render();
 	}
@@ -457,45 +449,5 @@ function animation3() {
 
 function updateCamera() {
 	currentCamera.updateProjectionMatrix();
-	render();
-}
-
-function switchCamera(val) {
-	cameraGUIHelper.orthographicCamera = val;
-	const position = currentCamera.position.clone();
-
-	// currentCamera = currentCamera.isPerspectiveCamera ? cameraOrtho : cameraPersp;
-	if (cameraGUIHelper.orthographicCamera) {
-		currentCamera = cameraOrtho;
-		folderCam.remove(PerspFOV);
-		folderCam.remove(PerspNear);
-		folderCam.remove(PerspFar);
-		const minMaxGUIHelper = new MinMaxGUIHelper(currentCamera, "near", "far");
-		OrthoNear = folderCam.add(minMaxGUIHelper, "min", 0, 100, 0.1).name("Near").onChange(updateCamera);
-		OrthoFar = folderCam.add(minMaxGUIHelper, "max", 200, 10000, 10).name("Far").onChange(updateCamera);
-	} else {
-
-	}
-	currentCamera.position.copy(position);
-
-	orbit.object = currentCamera;
-	control.camera = currentCamera;
-
-	currentCamera.lookAt(orbit.target.x, orbit.target.y, orbit.target.z);
-	onWindowResize();
-}
-
-function onWindowResize() {
-	const aspect = window.innerWidth / window.innerHeight;
-
-	cameraPersp.aspect = aspect;
-	cameraPersp.updateProjectionMatrix();
-
-	cameraOrtho.left = cameraOrtho.bottom * aspect;
-	cameraOrtho.right = cameraOrtho.top * aspect;
-	cameraOrtho.updateProjectionMatrix();
-
-	renderer.setSize(window.innerWidth, window.innerHeight);
-
 	render();
 }
