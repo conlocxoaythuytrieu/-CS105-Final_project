@@ -20,6 +20,7 @@ var loader = new THREE.TextureLoader(),
 var LightSwitch = false,
 	type = null,
 	pre_material = null;
+var id_animation;
 
 var BoxGeometry = new THREE.BoxGeometry(50, 50, 50, 20, 20, 20);
 var SphereGeometry = new THREE.SphereGeometry(30, 50, 50);
@@ -203,7 +204,6 @@ function setMaterial(material_id) {
 	switch (material_id) {
 		case 1:
 			point.material = PointMaterial;
-			console.log(1);
 			break;
 		case 2:
 			mesh.material = BasicMaterial;
@@ -279,6 +279,9 @@ function RemovePointLight() {
 		scene.remove(PointLightHelper);
 		scene.remove(meshplane);
 
+		if (control.dragging == 1 && control.object.type == "PointLight")
+			control.detach();
+			
 		if (type == 3 || type == 4)
 			setMaterial(type);
 
@@ -350,4 +353,45 @@ function onDocumentMouseDown(event) {
 	if (check_obj == 0 && control.dragging == 0) control.detach();
 
 	render();
+}
+
+function animation(id) {
+	cancelAnimationFrame(id_animation);
+	mesh.rotation.set(0, 0, 0);
+	point.rotation.set(0, 0, 0);
+	switch (id) {
+		case 1:
+			animation1();
+			break;
+		case 2:
+			animation2();
+			break;
+		case 3:
+			animation3();
+	}
+	render();
+}
+window.animation = animation;
+
+function animation1() {
+	mesh.rotation.x += 0.01;
+	point.rotation.x += 0.01;
+	render();
+	id_animation = requestAnimationFrame(animation1);
+}
+
+function animation2() {
+	mesh.rotation.y += 0.01;
+	point.rotation.y += 0.01;
+	render();
+	id_animation = requestAnimationFrame(animation2);
+}
+
+function animation3() {
+	mesh.rotation.x += Math.PI / 180;
+	mesh.rotation.y += Math.PI / 180;
+	mesh.rotation.z += Math.PI / 180;
+	point.rotation.set(mesh.rotation.x, mesh.rotation.y, mesh.rotation.z);
+	render();
+	id_animation = requestAnimationFrame(animation3);
 }
