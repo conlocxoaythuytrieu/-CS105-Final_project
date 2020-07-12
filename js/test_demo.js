@@ -13,7 +13,7 @@ import {
 } from "../js/dat.gui.module.js";
 
 
-var cameraPersp, currentCamera;
+var cameraPersp, cameraOrtho, currentCamera;
 var scene, renderer, control, orbit, gui, texture, light, PointLightHelper, meshplane, raycaster;
 var loader = new THREE.TextureLoader(),
 	mouse = new THREE.Vector2();
@@ -21,6 +21,7 @@ var LightSwitch = false,
 	type = null,
 	pre_material = null;
 var id_animation;
+var colorGUI, folder;
 
 var BoxGeometry = new THREE.BoxGeometry(50, 50, 50, 20, 20, 20);
 var SphereGeometry = new THREE.SphereGeometry(30, 50, 50);
@@ -43,17 +44,57 @@ var PointMaterial = new THREE.PointsMaterial({
 	size: 2,
 });
 var TextureBasicMaterial = new THREE.MeshBasicMaterial({
-	map: texture
+	// map: texture
 });
 var PhongMaterial = new THREE.MeshPhongMaterial({
 	color: "#F500F5"
 });
 var TexturePhongMaterial = new THREE.MeshPhongMaterial({
-	map: texture
+	// map: texture
 });
 
 var mesh = new THREE.Mesh();
 var point = new THREE.Points();
+
+class ColorGUIHelper {
+	constructor(object, prop) {
+		this.object = object;
+		this.prop = prop;
+	}
+	get value() {
+		return `#${this.object[this.prop].getHexString()}`;
+	}
+	set value(hexString) {
+		this.object[this.prop].set(hexString);
+		render();
+	}
+}
+
+class MinMaxGUIHelper {
+	constructor(object, minprop, maxprop) {
+		this.object = object;
+		this.minprop = minprop;
+		this.maxprop = maxprop;
+	}
+	get min() {
+		return this.object[this.minprop];
+	}
+	set min(v) {
+		this.object[this.minprop] = v;
+	}
+	get max() {
+		return this.object[this.maxprop];
+	}
+	set max(v) {
+		this.object[this.maxprop] = v;
+	}
+}
+
+class CameraGUIHelper {
+	constructor(object) {
+		this.object = object;
+	}
+}
 
 init();
 render();
@@ -70,6 +111,14 @@ function init() {
 	// Coordinate axes
 	// scene.add(new THREE.AxesHelper(100));
 
+	{
+		gui = new GUI({
+			autoPlace: false
+		});
+		var customContainer = document.getElementById("my-gui-container");
+		customContainer.appendChild(gui.domElement);
+	}
+
 	// Camera
 	{
 		const fov = 75;
@@ -78,28 +127,30 @@ function init() {
 		const far = 2000;
 		const viewSize = 600;
 		cameraPersp = new THREE.PerspectiveCamera(fov, aspectRatio, near, far);
+		cameraOrtho = new THREE.OrthographicCamera(-aspectRatio * viewSize / 2, -aspectRatio * viewSize / 2, viewSize / 2, -viewSize / 2, near, far);
 		currentCamera = cameraPersp;
 		currentCamera.position.set(1, 50, 100);
 		currentCamera.lookAt(0, 0, 0);
+
+		folder = gui.addFolder('Camera');
+		folder.open();
+		folder.add(currentCamera, "fov", 1, 180).name("FOV").onChange(updateCamera);
+		const minMaxGUIHelper = new MinMaxGUIHelper(currentCamera, "near", "far");
+		folder.add(minMaxGUIHelper, "min", 0.1, 100, 0.1).name("Near").onChange(updateCamera);
+		folder.add(minMaxGUIHelper, "max", 200, 10000, 10).name("Far").onChange(updateCamera);
 	}
 
 	raycaster = new THREE.Raycaster();
 
 	{
-		renderer = new THREE.WebGLRenderer();
+		renderer = new THREE.WebGLRenderer({
+			antialias: true
+		});
 		renderer.setPixelRatio(window.devicePixelRatio);
 		renderer.setSize(window.innerWidth, window.innerHeight);
 		renderer.shadowMap.enabled = true;
 		renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 		document.getElementById("rendering").appendChild(renderer.domElement);
-	}
-
-	{
-		gui = new GUI({
-			autoPlace: false
-		});
-		var customContainer = document.getElementById("my-gui-container");
-		customContainer.appendChild(gui.domElement);
 	}
 
 	// check when the browser size has changed and adjust the camera accordingly
@@ -135,7 +186,6 @@ function init() {
 		meshplane = new THREE.Mesh(planeGeo, planeMat);
 		meshplane.receiveShadow = true;
 		meshplane.rotation.x = Math.PI * -.5;
-		meshplane.position.y += 1;
 	}
 
 	{
@@ -266,6 +316,8 @@ function SetPointLight() {
 
 		if (type == 3 || type == 4)
 			setMaterial(type);
+
+		colorGUI = gui.addColor(new ColorGUIHelper(light, "color"), "value").name("Light Color");
 		render();
 	}
 }
@@ -281,10 +333,12 @@ function RemovePointLight() {
 
 		if (control.dragging == 1 && control.object.type == "PointLight")
 			control.detach();
-			
+
 		if (type == 3 || type == 4)
 			setMaterial(type);
 
+		gui.remove(colorGUI);
+		gui.remove(folder);
 		render();
 	}
 }
@@ -394,4 +448,9 @@ function animation3() {
 	point.rotation.set(mesh.rotation.x, mesh.rotation.y, mesh.rotation.z);
 	render();
 	id_animation = requestAnimationFrame(animation3);
+}
+
+function updateCamera() {
+	currentCamera.updateProjectionMatrix();
+	render();
 }
