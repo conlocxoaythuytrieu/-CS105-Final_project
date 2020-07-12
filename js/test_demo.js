@@ -36,10 +36,10 @@ var DodecahedronGeometry = new THREE.DodecahedronGeometry(30);
 var IcosahedronGeometry = new THREE.IcosahedronGeometry(30);
 
 var BasicMaterial = new THREE.MeshBasicMaterial({
-	color: "#F5F500"
+	color: "#F5F5F5"
 });
 var PointMaterial = new THREE.PointsMaterial({
-	color: "#F5F500",
+	color: "#F5F5F5",
 	sizeAttenuation: false,
 	size: 2,
 });
@@ -47,7 +47,7 @@ var TextureBasicMaterial = new THREE.MeshBasicMaterial({
 	// map: texture
 });
 var PhongMaterial = new THREE.MeshPhongMaterial({
-	color: "#F500F5"
+	color: "#F5F5F5"
 });
 var TexturePhongMaterial = new THREE.MeshPhongMaterial({
 	// map: texture
@@ -183,7 +183,7 @@ function init() {
 	}
 
 	{
-		const color = "#FFFFFF";
+		const color = "#F5F5F5";
 		const intensity = 2;
 		light = new THREE.PointLight(color, intensity);
 		light.castShadow = true;
@@ -245,7 +245,7 @@ window.addMesh = addMesh;
 function setMaterial(material_id) {
 	type = material_id;
 	pre_material != 1 ? scene.remove(mesh) : scene.remove(point);
-	gui.remove(ObjColorGUI);
+	// gui.remove(ObjColorGUI);
 
 	switch (material_id) {
 		case 1:
@@ -253,27 +253,35 @@ function setMaterial(material_id) {
 			break;
 		case 2:
 			mesh.material = BasicMaterial;
-			mesh.material.wireframe = true;
+			// mesh.material.color = "#F5F5F5";
 			mesh.castShadow = false;
+			mesh.material.wireframe = true;
+			mesh.material.map = null;
+			console.log(mesh.material.needsUpdate)
+			// ObjColorGUI = gui.addColor(new ColorGUIHelper(mesh.material, "color"), "value").name("Obj Color");
 			break;
 		case 3:
 			if (!LightSwitch)
 				mesh.material = BasicMaterial;
 			else
 				mesh.material = PhongMaterial;
+			// mesh.material.color = "#F5F5F5";
 			mesh.castShadow = true;
 			mesh.material.wireframe = false;
-			ObjColorGUI = gui.addColor(new ColorGUIHelper(mesh.material, "color"), "value").name("Obj Color");
+			mesh.material.map = null;
+			// ObjColorGUI = gui.addColor(new ColorGUIHelper(mesh.material, "color"), "value").name("Obj Color");
 			break;
 		case 4:
 			if (!LightSwitch)
-				mesh.material = TextureBasicMaterial;
+				mesh.material = BasicMaterial;
 			else
-				mesh.material = TexturePhongMaterial;
+				mesh.material = PhongMaterial;
 			mesh.castShadow = true;
+			mesh.material.wireframe = false;
 			mesh.material.map = texture;
 			mesh.material.map.needsUpdate = true;
-			ObjColorGUI = gui.addColor(new ColorGUIHelper(mesh.material, "color"), "value").name("Obj Color");
+			mesh.material.needsUpdate = true;
+			// ObjColorGUI = gui.addColor(new ColorGUIHelper(mesh.material, "color"), "value").name("Obj Color");
 			break;
 		default:
 			break;
