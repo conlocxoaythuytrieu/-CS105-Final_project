@@ -36,7 +36,8 @@ var DodecahedronGeometry = new THREE.DodecahedronGeometry(30);
 var IcosahedronGeometry = new THREE.IcosahedronGeometry(30);
 
 var BasicMaterial = new THREE.MeshBasicMaterial({
-	color: "#F5F5F5"
+	color: "#F5F5F5",
+	side: THREE.DoubleSide
 });
 var PointMaterial = new THREE.PointsMaterial({
 	color: "#F5F5F5",
@@ -44,7 +45,8 @@ var PointMaterial = new THREE.PointsMaterial({
 	size: 2,
 });
 var PhongMaterial = new THREE.MeshPhongMaterial({
-	color: "#F5F5F5"
+	color: "#F5F5F5",
+	side: THREE.DoubleSide
 });
 
 var mesh = new THREE.Mesh();
@@ -433,10 +435,9 @@ function onDocumentMouseDown(event) {
 }
 
 var root;
-
 function animation(id) {
 	if (type == null) return;
-
+	root = mesh.position.clone();
 	cancelAnimationFrame(id_animation);
 
 	switch (id) {
@@ -450,8 +451,7 @@ function animation(id) {
 			animation3();
 			break;
 		case 4:
-			root = mesh.position.clone();
-			animation4(root);
+			animation4();
 			break;
 	}
 
@@ -459,16 +459,45 @@ function animation(id) {
 }
 window.animation = animation;
 
+var ani1_step=0.25;
 function animation1() {
-	mesh.rotation.x += 0.01;
-	point.rotation.x += 0.01;
-	render();
-	id_animation = requestAnimationFrame(animation1);
-}
+	mesh.position.y+=ani1_step;
+	mesh.position.z+=ani1_step*3;
 
+	mesh.rotation.x += Math.abs(ani1_step/10);
+	mesh.rotation.y += Math.abs(ani1_step/10);
+	mesh.rotation.z += Math.abs(ani1_step/10);
+
+	point.rotation.copy(mesh.rotation);
+	point.position.copy(mesh.position);
+	
+	let tam = Math.abs(Math.floor(mesh.position.y-root.y));
+	if(tam%10==0)
+	{
+		if(tam/10 == 3)
+			ani1_step*=-1;	
+		if(tam/10 == 0)
+			setMaterial(3);
+			if(tam/10 == 1|| tam/10 == 2)
+			setMaterial(2/(tam/10));
+		}
+		
+		render();
+		
+		id_animation = requestAnimationFrame(animation1);
+	}
+	
+var ani2_step = 0;
 function animation2() {
-	mesh.rotation.y += 0.01;
-	point.rotation.y += 0.01;
+	ani2_step += 0.05;
+	mesh.position.x = 30 * Math.cos(ani2_step) + root.x;
+	mesh.position.y = 30 * Math.sin(ani2_step) + root.y;
+	point.position.copy(mesh.position);
+
+	mesh.rotation.x += 0.03
+	mesh.rotation.y += 0.03
+	point.rotation.copy(mesh.rotation);
+
 	render();
 	id_animation = requestAnimationFrame(animation2);
 }
@@ -482,20 +511,9 @@ function animation3() {
 	id_animation = requestAnimationFrame(animation3);
 }
 
-var offset_ani4 = 0;
 
 function animation4() {
-	offset_ani4 += 0.05;
-	mesh.position.x = 30 * Math.cos(offset_ani4) + root.x;
-	mesh.position.y = 30 * Math.sin(offset_ani4) + root.y;
-	point.position.copy(mesh.position);
-
-	mesh.rotation.x += 0.03
-	mesh.rotation.y += 0.03
-	point.rotation.copy(mesh.rotation);
-
-	render();
-	id_animation = requestAnimationFrame(animation4);
+	var a=1;
 };
 
 function updateCamera() {
