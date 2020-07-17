@@ -233,8 +233,14 @@ function addMesh(mesh_id) {
 			break;
 	}
 
+
 	point.geometry = mesh.geometry;
 	setMaterial(3)
+
+	mesh.position.set(0,0,0);
+	mesh.rotation.set(0,0,0);
+	mesh.scale.set(1,1,1);
+
 	render();
 }
 window.addMesh = addMesh;
@@ -243,11 +249,9 @@ function setMaterial(material_id) {
 	type = material_id;
 	pre_material != 1 ? scene.remove(mesh) : scene.remove(point);
 	gui.remove(ObjColorGUI);
-	console.log(1);
-	if (control.dragging == 0 && (control.object.type == "Mesh" || control.object.type == "Point")) {
-		console.log(control.object);
-		control.detach();
-	}
+
+	if (control.object && (control.object.type == "Mesh" || control.object.type == "Points"))
+			control.detach();
 
 	switch (material_id) {
 		case 1:
@@ -431,6 +435,8 @@ function onDocumentMouseDown(event) {
 var root;
 
 function animation(id) {
+	if (type == null) return;
+
 	cancelAnimationFrame(id_animation);
 
 	switch (id) {
