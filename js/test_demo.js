@@ -36,21 +36,17 @@ var DodecahedronGeometry = new THREE.DodecahedronGeometry(30);
 var IcosahedronGeometry = new THREE.IcosahedronGeometry(30);
 
 var BasicMaterial = new THREE.MeshBasicMaterial({
-	color: "#F5F5F5"
+	color: "#F5F5F5",
+	side: THREE.DoubleSide
 });
 var PointMaterial = new THREE.PointsMaterial({
 	color: "#F5F5F5",
 	sizeAttenuation: false,
 	size: 2,
 });
-var TextureBasicMaterial = new THREE.MeshBasicMaterial({
-	// map: texture
-});
 var PhongMaterial = new THREE.MeshPhongMaterial({
-	color: "#F5F5F5"
-});
-var TexturePhongMaterial = new THREE.MeshPhongMaterial({
-	// map: texture
+	color: "#F5F5F5",
+	side: THREE.DoubleSide
 });
 
 var mesh = new THREE.Mesh();
@@ -103,7 +99,10 @@ function init() {
 	scene.add(grid);
 
 	// Coordinate axes
-	// scene.add(new THREE.AxesHelper(100));
+	scene.add(new THREE.AxesHelper(30));
+
+	// Fog
+	scene.fog = new THREE.Fog(0x23272a, 0.5, 1700, 4000);
 
 	{
 		gui = new GUI({
@@ -131,7 +130,7 @@ function init() {
 		folderCam.add(minMaxGUIHelper, "min", 0.1, 100, 0.1).name("Near").onChange(updateCamera);
 		folderCam.add(minMaxGUIHelper, "max", 200, 10000, 10).name("Far").onChange(updateCamera);
 	}
-	
+
 	ObjColorGUI = gui.addColor(new ColorGUIHelper(mesh.material, "color"), "value").name("Obj Color");
 
 	raycaster = new THREE.Raycaster();
@@ -188,7 +187,6 @@ function init() {
 		const intensity = 2;
 		light = new THREE.PointLight(color, intensity);
 		light.castShadow = true;
-		light.position.set(0, 70, 70);
 		PointLightHelper = new THREE.PointLightHelper(light, 5);
 	}
 }
@@ -236,8 +234,14 @@ function addMesh(mesh_id) {
 		default:
 			break;
 	}
+
+
 	point.geometry = mesh.geometry;
 	setMaterial(3)
+
+	mesh.position.set(0,0,0);
+	mesh.rotation.set(0,0,0);
+	mesh.scale.set(1,1,1);
 
 	render();
 }
@@ -247,6 +251,10 @@ function setMaterial(material_id) {
 	type = material_id;
 	pre_material != 1 ? scene.remove(mesh) : scene.remove(point);
 	gui.remove(ObjColorGUI);
+
+	if (control.object && (control.object.type == "Mesh" || control.object.type == "Points"))
+			control.detach();
+
 	switch (material_id) {
 		case 1:
 			point.material = PointMaterial;
@@ -255,7 +263,6 @@ function setMaterial(material_id) {
 			mesh.material = BasicMaterial;
 			mesh.castShadow = false;
 			mesh.material.wireframe = true;
-			// mesh.material.map = null;
 			break;
 		case 3:
 			if (!LightSwitch)
@@ -264,7 +271,6 @@ function setMaterial(material_id) {
 				mesh.material = PhongMaterial;
 			mesh.castShadow = true;
 			mesh.material.wireframe = false;
-			// mesh.material.map = null;
 			break;
 		case 4:
 			if (!LightSwitch)
@@ -280,16 +286,18 @@ function setMaterial(material_id) {
 		default:
 			break;
 	}
-	if(material_id != 4)
-	{
+
+	if (material_id != 4) {
 		mesh.material.map = null;
 		mesh.material.needsUpdate = true;
 	}
+
 	if (pre_material != 1 && material_id == 1) {
 		point.position.copy(mesh.position);
 		point.rotation.copy(mesh.rotation);
 		point.scale.copy(mesh.scale);
 	}
+
 	if (pre_material == 1 && material_id != 1) {
 		mesh.position.copy(point.position);
 		mesh.rotation.copy(point.rotation);
@@ -305,6 +313,7 @@ function setMaterial(material_id) {
 		ObjColorGUI = gui.addColor(new ColorGUIHelper(point.material, "color"), "value").name("Obj Color");
 		scene.add(point);
 	}
+
 	pre_material = material_id;
 	render();
 }
@@ -320,6 +329,7 @@ window.setTexture = setTexture;
 function SetPointLight() {
 	if (!LightSwitch) {
 		LightSwitch = true;
+		light.position.set(0, 70, 70);
 
 		scene.add(meshplane);
 		scene.add(light);
@@ -327,6 +337,7 @@ function SetPointLight() {
 
 		if (type == 3 || type == 4)
 			setMaterial(type);
+
 		LightColorGUI = gui.addColor(new ColorGUIHelper(light, "color"), "value").name("Light Color");
 		render();
 	}
@@ -341,14 +352,13 @@ function RemovePointLight() {
 		scene.remove(PointLightHelper);
 		scene.remove(meshplane);
 
-		if (control.dragging == 1 && control.object.type == "PointLight")
+		if (control.object && control.object.type == "PointLight")
 			control.detach();
 
 		if (type == 3 || type == 4)
 			setMaterial(type);
 
 		gui.remove(LightColorGUI);
-		gui.remove(folder);
 		render();
 	}
 }
@@ -394,19 +404,23 @@ function onDocumentMouseDown(event) {
 	event.preventDefault();
 	mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
 	mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
 	// find intersections
 	raycaster.setFromCamera(mouse, currentCamera);
 	var intersects = raycaster.intersectObjects(scene.children);
 	let check_obj = 0;
+
 	if (intersects.length > 0) {
 		var obj;
 		for (obj in intersects) {
 			if (intersects[obj].object.geometry.type == "PlaneGeometry") continue;
+
 			if (intersects[obj].object.type == "Mesh" || intersects[obj].object.type == "Points") {
 				check_obj = 1;
 				control_transform(intersects[obj].object);
 				break;
 			}
+
 			if (intersects[obj].object.type == "PointLightHelper") {
 				check_obj = 1;
 				control_transform(light);
@@ -414,15 +428,18 @@ function onDocumentMouseDown(event) {
 			}
 		}
 	}
-	if (check_obj == 0 && control.dragging == 0) control.detach();
 
+	if (check_obj == 0 && control.dragging == 0)
+		control.detach();
 	render();
 }
 
+var root;
 function animation(id) {
+	if (type == null) return;
+	root = mesh.position.clone();
 	cancelAnimationFrame(id_animation);
-	mesh.rotation.set(0, 0, 0);
-	point.rotation.set(0, 0, 0);
+
 	switch (id) {
 		case 1:
 			animation1();
@@ -432,21 +449,55 @@ function animation(id) {
 			break;
 		case 3:
 			animation3();
+			break;
+		case 4:
+			animation4();
+			break;
 	}
+
 	render();
 }
 window.animation = animation;
 
+var ani1_step=0.25;
 function animation1() {
-	mesh.rotation.x += 0.01;
-	point.rotation.x += 0.01;
-	render();
-	id_animation = requestAnimationFrame(animation1);
-}
+	mesh.position.y+=ani1_step;
+	mesh.position.z+=ani1_step*3;
 
+	mesh.rotation.x += Math.abs(ani1_step/10);
+	mesh.rotation.y += Math.abs(ani1_step/10);
+	mesh.rotation.z += Math.abs(ani1_step/10);
+
+	point.rotation.copy(mesh.rotation);
+	point.position.copy(mesh.position);
+	
+	let tam = Math.abs(Math.floor(mesh.position.y-root.y));
+	if(tam%10==0)
+	{
+		if(tam/10 == 3)
+			ani1_step*=-1;	
+		if(tam/10 == 0)
+			setMaterial(3);
+			if(tam/10 == 1|| tam/10 == 2)
+			setMaterial(2/(tam/10));
+		}
+		
+		render();
+		
+		id_animation = requestAnimationFrame(animation1);
+	}
+	
+var ani2_step = 0;
 function animation2() {
-	mesh.rotation.y += 0.01;
-	point.rotation.y += 0.01;
+	ani2_step += 0.05;
+	mesh.position.x = 30 * Math.cos(ani2_step) + root.x;
+	mesh.position.y = 30 * Math.sin(ani2_step) + root.y;
+	point.position.copy(mesh.position);
+
+	mesh.rotation.x += 0.03
+	mesh.rotation.y += 0.03
+	point.rotation.copy(mesh.rotation);
+
 	render();
 	id_animation = requestAnimationFrame(animation2);
 }
@@ -455,10 +506,15 @@ function animation3() {
 	mesh.rotation.x += Math.PI / 180;
 	mesh.rotation.y += Math.PI / 180;
 	mesh.rotation.z += Math.PI / 180;
-	point.rotation.set(mesh.rotation.x, mesh.rotation.y, mesh.rotation.z);
+	point.rotation.copy(mesh.rotation);
 	render();
 	id_animation = requestAnimationFrame(animation3);
 }
+
+
+function animation4() {
+	var a=1;
+};
 
 function updateCamera() {
 	currentCamera.updateProjectionMatrix();
