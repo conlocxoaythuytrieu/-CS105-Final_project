@@ -247,6 +247,12 @@ function setMaterial(material_id) {
 	type = material_id;
 	pre_material != 1 ? scene.remove(mesh) : scene.remove(point);
 	gui.remove(ObjColorGUI);
+	console.log(1);
+	if (control.dragging == 0 && (control.object.type == "Mesh"||control.object.type == "Point"))
+			{
+				console.log(control.object);
+				control.detach();
+			}
 
 	switch (material_id) {
 		case 1:
