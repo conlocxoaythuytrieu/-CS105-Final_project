@@ -11,6 +11,9 @@ import {
 import {
 	GUI
 } from "../js/dat.gui.module.js";
+import {
+	GLTFLoader
+} from '../js/GLTFLoader.js';
 
 
 var cameraPersp, cameraOrtho, currentCamera;
@@ -86,6 +89,9 @@ class MinMaxGUIHelper {
 	}
 }
 
+var mixers = [];
+var clock = new THREE.Clock();
+var loader_flamingo = new GLTFLoader();
 init();
 render();
 
@@ -189,6 +195,8 @@ function init() {
 		light.castShadow = true;
 		PointLightHelper = new THREE.PointLightHelper(light, 5);
 	}
+
+
 }
 
 function render() {
@@ -239,9 +247,9 @@ function addMesh(mesh_id) {
 	point.geometry = mesh.geometry;
 	setMaterial(3)
 
-	mesh.position.set(0,0,0);
-	mesh.rotation.set(0,0,0);
-	mesh.scale.set(1,1,1);
+	mesh.position.set(0, 0, 0);
+	mesh.rotation.set(0, 0, 0);
+	mesh.scale.set(1, 1, 1);
 
 	render();
 }
@@ -253,7 +261,7 @@ function setMaterial(material_id) {
 	gui.remove(ObjColorGUI);
 
 	if (control.object && (control.object.type == "Mesh" || control.object.type == "Points"))
-			control.detach();
+		control.detach();
 
 	switch (material_id) {
 		case 1:
@@ -434,12 +442,19 @@ function onDocumentMouseDown(event) {
 	render();
 }
 
-var root;
+var root, flamingo = null;
+
 function animation(id) {
 	if (type == null) return;
 	root = mesh.position.clone();
 	cancelAnimationFrame(id_animation);
-
+	if (flamingo)
+	{
+		if (control.object && control.object.name == "mesh_0")
+			control.detach();
+		scene.remove(flamingo);
+		flamingo=null;
+	}
 	switch (id) {
 		case 1:
 			animation1();
@@ -448,6 +463,25 @@ function animation(id) {
 			animation2();
 			break;
 		case 3:
+			loader_flamingo.load('models/gltf/Flamingo.glb', function (gltf) {
+
+				console.log(gltf.scene.children[0])
+				flamingo = gltf.scene.children[0];
+
+				var s = 0.35;
+				flamingo.scale.set(s, s, s);
+				flamingo.position.y = 15;
+				flamingo.rotation.y = -1;
+
+				flamingo.castShadow = true;
+				flamingo.receiveShadow = true;
+				scene.add(flamingo);
+				var mixer = new THREE.AnimationMixer(flamingo);
+				mixer.clipAction(gltf.animations[0]).setDuration(1).play();
+				mixers.push(mixer);
+				console.log(gltf.animations[0]);
+
+			});
 			animation3();
 			break;
 		case 4:
@@ -459,35 +493,36 @@ function animation(id) {
 }
 window.animation = animation;
 
-var ani1_step=0.25;
-function animation1() {
-	mesh.position.y+=ani1_step;
-	mesh.position.z+=ani1_step*3;
+var ani1_step = 0.25;
 
-	mesh.rotation.x += Math.abs(ani1_step/10);
-	mesh.rotation.y += Math.abs(ani1_step/10);
-	mesh.rotation.z += Math.abs(ani1_step/10);
+function animation1() {
+	mesh.position.y += ani1_step;
+	mesh.position.z += ani1_step * 3;
+
+	mesh.rotation.x += Math.abs(ani1_step / 10);
+	mesh.rotation.y += Math.abs(ani1_step / 10);
+	mesh.rotation.z += Math.abs(ani1_step / 10);
 
 	point.rotation.copy(mesh.rotation);
 	point.position.copy(mesh.position);
-	
-	let tam = Math.abs(Math.floor(mesh.position.y-root.y));
-	if(tam%10==0)
-	{
-		if(tam/10 == 3)
-			ani1_step*=-1;	
-		if(tam/10 == 0)
+
+	let tam = Math.abs(Math.floor(mesh.position.y - root.y));
+	if (tam % 10 == 0) {
+		if (tam / 10 == 3)
+			ani1_step *= -1;
+		if (tam / 10 == 0)
 			setMaterial(3);
-			if(tam/10 == 1|| tam/10 == 2)
-			setMaterial(2/(tam/10));
-		}
-		
-		render();
-		
-		id_animation = requestAnimationFrame(animation1);
+		if (tam / 10 == 1 || tam / 10 == 2)
+			setMaterial(2 / (tam / 10));
 	}
-	
+
+	render();
+
+	id_animation = requestAnimationFrame(animation1);
+}
+
 var ani2_step = 0;
+
 function animation2() {
 	ani2_step += 0.05;
 	mesh.position.x = 30 * Math.cos(ani2_step) + root.x;
@@ -502,18 +537,19 @@ function animation2() {
 	id_animation = requestAnimationFrame(animation2);
 }
 
+
 function animation3() {
-	mesh.rotation.x += Math.PI / 180;
-	mesh.rotation.y += Math.PI / 180;
-	mesh.rotation.z += Math.PI / 180;
-	point.rotation.copy(mesh.rotation);
 	render();
+	var delta = clock.getDelta();
+	for (var i = 0; i < mixers.length; i++)
+		mixers[0].update(delta);
+	console.log(mixers.length);
 	id_animation = requestAnimationFrame(animation3);
 }
 
 
 function animation4() {
-	var a=1;
+	var a = 1;
 };
 
 function updateCamera() {
