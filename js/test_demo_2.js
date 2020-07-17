@@ -479,9 +479,8 @@ function animation4() {
 	mesh.position.y = 30 * Math.sin(offset_ani4) + root.y;
 	point.position.copy(mesh.position);
 
-	mesh.rotation.x += Math.PI / 180;
-	mesh.rotation.y += Math.PI / 180;
-	mesh.rotation.z += Math.PI / 180;
+	mesh.rotation.x += 0.03
+	mesh.rotation.y += 0.03
 	point.rotation.copy(mesh.rotation);
 
 	render();
