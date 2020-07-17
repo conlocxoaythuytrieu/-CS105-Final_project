@@ -420,6 +420,7 @@ function onDocumentMouseDown(event) {
 }
 
 function animation(id) {
+	if (type==null) return;
 	cancelAnimationFrame(id_animation);
 	switch (id) {
 		case 1:
