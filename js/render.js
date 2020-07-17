@@ -1,31 +1,94 @@
-import * as THREE from '../js/three.module.js';
-
+import * as THREE from "../js/three.module.js";
 import {
 	OrbitControls
-} from '../js/OrbitControls.js';
+} from "../js/OrbitControls.js";
 import {
 	TransformControls
-} from '../js/TransformControls.js';
+} from "../js/TransformControls.js";
 import {
 	TeapotBufferGeometry
-} from '../js/TeapotBufferGeometry.js';
+} from "../js/TeapotBufferGeometry.js";
+import {
+	GUI
+} from "../js/dat.gui.module.js";
+
 
 var cameraPersp, cameraOrtho, currentCamera;
-var scene, renderer, control, orbit, mesh, raycaster, light, PointLightHelper;
-var Material = new THREE.MeshBasicMaterial({
-	color: '#F5F5F5',
-});
-Material.needsUpdate = true;
-var texture;
-var mouse = new THREE.Vector2();
-var type = 3;
+var scene, renderer, control, orbit, gui, texture, light, PointLightHelper, meshplane, raycaster;
+var loader = new THREE.TextureLoader(),
+	mouse = new THREE.Vector2();
+var LightSwitch = false,
+	type = null,
+	pre_material = null;
+var id_animation;
+var LightColorGUI, ObjColorGUI;
 
 var BoxGeometry = new THREE.BoxGeometry(50, 50, 50, 20, 20, 20);
-var SphereGeometry = new THREE.SphereGeometry(30, 60, 60);
-var ConeGeometry = new THREE.ConeGeometry(20, 60, 50, 20);
-var CylinderGeometry = new THREE.CylinderGeometry(20, 20, 40, 50, 20);
+var SphereGeometry = new THREE.SphereGeometry(30, 50, 50);
+var ConeGeometry = new THREE.ConeGeometry(30, 70, 50, 20);
+var CylinderGeometry = new THREE.CylinderGeometry(30, 30, 70, 50, 20);
 var TorusGeometry = new THREE.TorusGeometry(20, 5, 20, 100);
+var TorusKnotGeometry = new THREE.TorusKnotGeometry(40, 10, 70, 10);
 var TeapotGeometry = new TeapotBufferGeometry(20, 8);
+var TetrahedronGeometry = new THREE.TetrahedronGeometry(30);
+var OctahedronGeometry = new THREE.OctahedronGeometry(30);
+var DodecahedronGeometry = new THREE.DodecahedronGeometry(30);
+var IcosahedronGeometry = new THREE.IcosahedronGeometry(30);
+
+var BasicMaterial = new THREE.MeshBasicMaterial({
+	color: "#F5F5F5"
+});
+var PointMaterial = new THREE.PointsMaterial({
+	color: "#F5F5F5",
+	sizeAttenuation: false,
+	size: 2,
+});
+var TextureBasicMaterial = new THREE.MeshBasicMaterial({
+	// map: texture
+});
+var PhongMaterial = new THREE.MeshPhongMaterial({
+	color: "#F5F5F5"
+});
+var TexturePhongMaterial = new THREE.MeshPhongMaterial({
+	// map: texture
+});
+
+var mesh = new THREE.Mesh();
+var point = new THREE.Points();
+
+class ColorGUIHelper {
+	constructor(object, prop) {
+		this.object = object;
+		this.prop = prop;
+	}
+	get value() {
+		return `#${this.object[this.prop].getHexString()}`;
+	}
+	set value(hexString) {
+		this.object[this.prop].set(hexString);
+		render();
+	}
+}
+
+class MinMaxGUIHelper {
+	constructor(object, minprop, maxprop) {
+		this.object = object;
+		this.minprop = minprop;
+		this.maxprop = maxprop;
+	}
+	get min() {
+		return this.object[this.minprop];
+	}
+	set min(v) {
+		this.object[this.minprop] = v;
+	}
+	get max() {
+		return this.object[this.maxprop];
+	}
+	set max(v) {
+		this.object[this.maxprop] = v;
+	}
+}
 
 init();
 render();
@@ -33,33 +96,60 @@ render();
 function init() {
 	// Scene
 	scene = new THREE.Scene();
-	scene.background = new THREE.Color('#343A40');
+	scene.background = new THREE.Color("#343A40");
 
 	// Grid
-	scene.add(new THREE.GridHelper(400, 50, '#A3BAC3', '#A3BAC3'));
+	const grid = new THREE.GridHelper(400, 50, "#A3BAC3", "#A3BAC3");
+	scene.add(grid);
 
 	// Coordinate axes
 	// scene.add(new THREE.AxesHelper(100));
 
+	{
+		gui = new GUI({
+			autoPlace: false
+		});
+		var customContainer = document.getElementById("my-gui-container");
+		customContainer.appendChild(gui.domElement);
+	}
+
 	// Camera
 	{
-		const aspect = window.innerWidth / window.innerHeight;
-		cameraPersp = new THREE.PerspectiveCamera(75, aspect, 0.01, 2000);
-		// cameraOrtho = new THREE.OrthographicCamera(-600 * aspect, 600 * aspect, 600, -600, 0.01, 30000);
+		const fov = 75;
+		const aspectRatio = window.innerWidth / window.innerHeight;
+		const near = 0.1;
+		const far = 2000;
+		cameraPersp = new THREE.PerspectiveCamera(fov, aspectRatio, near, far);
 		currentCamera = cameraPersp;
 		currentCamera.position.set(1, 50, 100);
 		currentCamera.lookAt(0, 0, 0);
+
+		const folderCam = gui.addFolder("Camera");
+		folderCam.open();
+		folderCam.add(currentCamera, "fov", 1, 180).name("FOV").onChange(updateCamera);
+		const minMaxGUIHelper = new MinMaxGUIHelper(currentCamera, "near", "far");
+		folderCam.add(minMaxGUIHelper, "min", 0.1, 100, 0.1).name("Near").onChange(updateCamera);
+		folderCam.add(minMaxGUIHelper, "max", 200, 10000, 10).name("Far").onChange(updateCamera);
 	}
+	
+	ObjColorGUI = gui.addColor(new ColorGUIHelper(mesh.material, "color"), "value").name("Obj Color");
 
 	raycaster = new THREE.Raycaster();
 
-	renderer = new THREE.WebGLRenderer();
-	renderer.setPixelRatio(window.devicePixelRatio);
-	renderer.setSize(window.innerWidth, window.innerHeight);
-	document.getElementById("rendering").appendChild(renderer.domElement);
+	{
+		renderer = new THREE.WebGLRenderer({
+			antialias: true,
+			logarithmicDepthBuffer: true
+		});
+		renderer.setPixelRatio(window.devicePixelRatio);
+		renderer.setSize(window.innerWidth, window.innerHeight);
+		renderer.shadowMap.enabled = true;
+		renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+		document.getElementById("rendering").appendChild(renderer.domElement);
+	}
 
 	// check when the browser size has changed and adjust the camera accordingly
-	window.addEventListener('resize', function () {
+	window.addEventListener("resize", function () {
 		const WIDTH = window.innerWidth;
 		const HEIGHT = window.innerHeight;
 
@@ -72,176 +162,214 @@ function init() {
 
 	orbit = new OrbitControls(currentCamera, renderer.domElement);
 	orbit.update();
-	orbit.addEventListener('change', render);
+	orbit.addEventListener("change", render);
 
 	control = new TransformControls(currentCamera, renderer.domElement);
-	control.addEventListener('change', render);
+	control.addEventListener("change", render);
 
-	control.addEventListener('dragging-changed', function (event) {
+	control.addEventListener("dragging-changed", function (event) {
 		orbit.enabled = !event.value;
 	});
-}
 
-function setTexture(url) {
-	mesh = scene.getObjectByName("mesh1");
-	if (mesh) {
-		texture = new THREE.TextureLoader().load(url, render);
-		texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
-		SetMaterial(4);
+	// init plane for casting shadow
+	{
+		const planeSize = 400;
+		const planeGeo = new THREE.PlaneGeometry(planeSize, planeSize);
+		const planeMat = new THREE.MeshPhongMaterial({
+			side: THREE.DoubleSide,
+		});
+		meshplane = new THREE.Mesh(planeGeo, planeMat);
+		meshplane.receiveShadow = true;
+		meshplane.rotation.x = Math.PI * -.5;
+	}
+
+	{
+		const color = "#F5F5F5";
+		const intensity = 2;
+		light = new THREE.PointLight(color, intensity);
+		light.castShadow = true;
+		PointLightHelper = new THREE.PointLightHelper(light, 5);
 	}
 }
-window.setTexture = setTexture;
 
-function CloneMesh(dummy_mesh) {
-	mesh.name = dummy_mesh.name;
-	mesh.position.set(dummy_mesh.position.x, dummy_mesh.position.y, dummy_mesh.position.z);
-	mesh.rotation.set(dummy_mesh.rotation._x, dummy_mesh.rotation._y, dummy_mesh.rotation._z);
-	mesh.scale.set(dummy_mesh.scale.x, dummy_mesh.scale.y, dummy_mesh.scale.z);
-	scene.add(mesh);
-	control_transform(mesh);
+function render() {
+	renderer.render(scene, currentCamera);
+	// console.log("scene.children", scene.children);
 }
 
-function SetMaterial(material_id) {
-	mesh = scene.getObjectByName("mesh1");
-	light = scene.getObjectByName("pl1");
-	console.log("M", light);
-
-	type = material_id;
-
-	if (mesh) {
-		const dummy_mesh = mesh.clone();
-		scene.remove(mesh);
-
-		switch (material_id) {
-			case 1:
-				Material = new THREE.PointsMaterial({
-					color: '#F5F5F5',
-					sizeAttenuation: false,
-					size: 1,
-				});
-
-				mesh = new THREE.Points(dummy_mesh.geometry, Material);
-				CloneMesh(dummy_mesh);
-
-				break;
-			case 2:
-				Material = new THREE.MeshBasicMaterial({
-					color: '#F5F5F5',
-					wireframe: true,
-				});
-
-				mesh = new THREE.Mesh(dummy_mesh.geometry, Material);
-				CloneMesh(dummy_mesh);
-
-				break;
-			case 3:
-				if (!light)
-					Material = new THREE.MeshBasicMaterial({
-						color: '#FFFFFF',
-					});
-				else
-					Material = new THREE.MeshPhongMaterial({
-						color: '#FFFFFF',
-					});
-
-				mesh = new THREE.Mesh(dummy_mesh.geometry, Material);
-				CloneMesh(dummy_mesh);
-
-				break;
-			case 4:
-				if (!light)
-					Material = new THREE.MeshBasicMaterial({
-						map: texture,
-						transparent: true
-					});
-				else
-					Material = new THREE.MeshLambertMaterial({
-						map: texture,
-						transparent: true
-					});
-
-				mesh = new THREE.Mesh(dummy_mesh.geometry, Material);
-				CloneMesh(dummy_mesh);
-
-				break;
-		}
-
-		render();
-	}
-}
-window.SetMaterial = SetMaterial;
-
-function AddGeo(mesh_id) {
-	mesh = scene.getObjectByName("mesh1");
-	scene.remove(mesh);
-
+function addMesh(mesh_id) {
 	switch (mesh_id) {
 		case 1:
-			mesh = new THREE.Mesh(BoxGeometry, Material);
+			mesh.geometry = BoxGeometry;
 			break;
 		case 2:
-			mesh = new THREE.Mesh(SphereGeometry, Material);
+			mesh.geometry = SphereGeometry;
 			break;
 		case 3:
-			mesh = new THREE.Mesh(ConeGeometry, Material);
+			mesh.geometry = ConeGeometry;
 			break;
 		case 4:
-			mesh = new THREE.Mesh(CylinderGeometry, Material);
+			mesh.geometry = CylinderGeometry;
 			break;
 		case 5:
-			mesh = new THREE.Mesh(TorusGeometry, Material);
+			mesh.geometry = TorusGeometry;
 			break;
 		case 6:
-			mesh = new THREE.Mesh(TeapotGeometry, Material);
+			mesh.geometry = TorusKnotGeometry;
+			break;
+		case 7:
+			mesh.geometry = TeapotGeometry;
+			break;
+		case 8:
+			mesh.geometry = TetrahedronGeometry;
+			break;
+		case 9:
+			mesh.geometry = OctahedronGeometry;
+			break;
+		case 10:
+			mesh.geometry = DodecahedronGeometry;
+			break;
+		case 11:
+			mesh.geometry = IcosahedronGeometry;
+			break;
+		default:
 			break;
 	}
-	mesh.name = "mesh1";
-
-	scene.add(mesh);
-	control_transform(mesh);
+	point.geometry = mesh.geometry;
+	setMaterial(3)
 
 	render();
 }
-window.AddGeo = AddGeo;
+window.addMesh = addMesh;
+
+function setMaterial(material_id) {
+	type = material_id;
+	pre_material != 1 ? scene.remove(mesh) : scene.remove(point);
+	gui.remove(ObjColorGUI);
+	switch (material_id) {
+		case 1:
+			point.material = PointMaterial;
+			break;
+		case 2:
+			mesh.material = BasicMaterial;
+			mesh.castShadow = false;
+			mesh.material.wireframe = true;
+			// mesh.material.map = null;
+			break;
+		case 3:
+			if (!LightSwitch)
+				mesh.material = BasicMaterial;
+			else
+				mesh.material = PhongMaterial;
+			mesh.castShadow = true;
+			mesh.material.wireframe = false;
+			// mesh.material.map = null;
+			break;
+		case 4:
+			if (!LightSwitch)
+				mesh.material = BasicMaterial;
+			else
+				mesh.material = PhongMaterial;
+			mesh.castShadow = true;
+			mesh.material.wireframe = false;
+			mesh.material.map = texture;
+			mesh.material.map.needsUpdate = true;
+			mesh.material.needsUpdate = true;
+			break;
+		default:
+			break;
+	}
+	if(material_id != 4)
+	{
+		mesh.material.map = null;
+		mesh.material.needsUpdate = true;
+	}
+	if (pre_material != 1 && material_id == 1) {
+		point.position.copy(mesh.position);
+		point.rotation.copy(mesh.rotation);
+		point.scale.copy(mesh.scale);
+	}
+	if (pre_material == 1 && material_id != 1) {
+		mesh.position.copy(point.position);
+		mesh.rotation.copy(point.rotation);
+		mesh.scale.copy(point.scale);
+	}
+
+	if (material_id != 1) {
+		mesh.material.color.set("#F5F5F5");
+		ObjColorGUI = gui.addColor(new ColorGUIHelper(mesh.material, "color"), "value").name("Obj Color");
+		scene.add(mesh);
+	} else {
+		point.material.color.set("#F5F5F5");
+		ObjColorGUI = gui.addColor(new ColorGUIHelper(point.material, "color"), "value").name("Obj Color");
+		scene.add(point);
+	}
+	pre_material = material_id;
+	render();
+}
+window.setMaterial = setMaterial;
+
+function setTexture(url) {
+	texture = loader.load(url, render);
+	texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+	setMaterial(4);
+}
+window.setTexture = setTexture;
+
+function SetPointLight() {
+	if (!LightSwitch) {
+		LightSwitch = true;
+		light.position.set(0, 70, 70);
+		scene.add(meshplane);
+		scene.add(light);
+		scene.add(PointLightHelper);
+
+		if (type == 3 || type == 4)
+			setMaterial(type);
+		LightColorGUI = gui.addColor(new ColorGUIHelper(light, "color"), "value").name("Light Color");
+		render();
+	}
+}
+window.SetPointLight = SetPointLight;
+
+function RemovePointLight() {
+	if (LightSwitch) {
+		LightSwitch = false;
+
+		scene.remove(light);
+		scene.remove(PointLightHelper);
+		scene.remove(meshplane);
+
+		if (control.object && control.object.type == "PointLight")
+			control.detach();
+
+		if (type == 3 || type == 4)
+			setMaterial(type);
+
+		gui.remove(LightColorGUI);
+		render();
+	}
+}
+window.RemovePointLight = RemovePointLight;
 
 function control_transform(mesh) {
 	control.attach(mesh);
 	scene.add(control);
-	window.addEventListener('keydown', function (event) {
+
+	window.addEventListener("keydown", function (event) {
 		switch (event.keyCode) {
-			case 87: // W
+			case 84: // T
 				EventTranslate();
 				break;
-			case 69: // E
+			case 82: // R
 				EventRotate();
 				break;
-			case 82: // R
+			case 83: // S
 				EventScale();
 				break;
 		}
 	});
 }
-
-function setFOV(value) {
-	currentCamera.fov = Number(value);
-	currentCamera.updateProjectionMatrix();
-	render();
-}
-window.setFOV = setFOV;
-
-function setFar(value) {
-	currentCamera.far = Number(value);
-	currentCamera.updateProjectionMatrix();
-	render();
-}
-window.setFar = setFar;
-
-function setNear(value) {
-	currentCamera.near = Number(value);
-	currentCamera.updateProjectionMatrix();
-	render();
-}
-window.setNear = setNear;
 
 function EventTranslate() {
 	control.setMode("translate");
@@ -258,44 +386,7 @@ function EventScale() {
 }
 window.EventScale = EventScale;
 
-function SetPointLight() {
-	// RemovePointLight();
-	light = scene.getObjectByName("pl1");
-
-	if (!light) {
-		const color = '#FFFFFF';
-		const intensity = 2;
-		light = new THREE.PointLight(color, intensity);
-		light.position.set(0, 70, 0);
-		light.name = "pl1";
-		scene.add(light);
-		control_transform(light);
-		if (type == 3 || type == 4) {
-			SetMaterial(type);
-		}
-
-		PointLightHelper = new THREE.PointLightHelper(light);
-		PointLightHelper.name = "plh1";
-		scene.add(PointLightHelper);
-		render();
-	}
-}
-window.SetPointLight = SetPointLight;
-
-function RemovePointLight() {
-
-	scene.remove(light);
-	scene.remove(PointLightHelper);
-
-	if (type == 3 || type == 4) {
-		SetMaterial(type);
-	}
-
-	render();
-}
-window.RemovePointLight = RemovePointLight;
-
-document.getElementById("rendering").addEventListener('mousedown', onDocumentMouseDown, false);
+document.getElementById("rendering").addEventListener("mousedown", onDocumentMouseDown, false);
 
 function onDocumentMouseDown(event) {
 	event.preventDefault();
@@ -308,7 +399,8 @@ function onDocumentMouseDown(event) {
 	if (intersects.length > 0) {
 		var obj;
 		for (obj in intersects) {
-			if (intersects[obj].object.type == "Mesh") {
+			if (intersects[obj].object.geometry.type == "PlaneGeometry") continue;
+			if (intersects[obj].object.type == "Mesh" || intersects[obj].object.type == "Points") {
 				check_obj = 1;
 				control_transform(intersects[obj].object);
 				break;
@@ -325,11 +417,8 @@ function onDocumentMouseDown(event) {
 	render();
 }
 
-var id_animation;
-
 function animation(id) {
 	cancelAnimationFrame(id_animation);
-	mesh.rotation.set(0, 0, 0);
 	switch (id) {
 		case 1:
 			animation1();
@@ -339,6 +428,9 @@ function animation(id) {
 			break;
 		case 3:
 			animation3();
+			break;
+		case 4:
+			animation4();
 	}
 	render();
 }
@@ -346,12 +438,14 @@ window.animation = animation;
 
 function animation1() {
 	mesh.rotation.x += 0.01;
+	point.rotation.x += 0.01;
 	render();
 	id_animation = requestAnimationFrame(animation1);
 }
 
 function animation2() {
 	mesh.rotation.y += 0.01;
+	point.rotation.y += 0.01;
 	render();
 	id_animation = requestAnimationFrame(animation2);
 }
@@ -359,12 +453,24 @@ function animation2() {
 function animation3() {
 	mesh.rotation.x += Math.PI / 180;
 	mesh.rotation.y += Math.PI / 180;
-	mesh.rotation.z += Math.PI / 180
+	mesh.rotation.z += Math.PI / 180;
+	point.rotation.copy(mesh.rotation);
 	render();
 	id_animation = requestAnimationFrame(animation3);
 }
 
-function render() {
-	renderer.render(scene, currentCamera);
-	// console.log(scene.children);
+var t = 0;
+
+function animation4() {
+	t += 0.05;
+	mesh.position.x = 30 * Math.cos(t);
+	mesh.position.y = 30 * Math.sin(t);
+	point.position.copy(mesh.position);
+	render();
+	id_animation = requestAnimationFrame(animation4);
+};
+
+function updateCamera() {
+	currentCamera.updateProjectionMatrix();
+	render();
 }
