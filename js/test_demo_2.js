@@ -477,8 +477,10 @@ function animation(id) {
 			scene.add(hemiLight);
 			// const hemiLightHelper = new THREE.HemisphereLightHelper(hemiLight, 10);
 			// scene.add(hemiLightHelper);
-
+			mixers = [];
 			flamingoLoader.load('models/gltf/Flamingo.glb', function (gltf) {
+
+				console.log(gltf.scene.children[0])
 				flamingo = gltf.scene.children[0];
 
 				var s = 0.35;
@@ -492,6 +494,8 @@ function animation(id) {
 				var mixer = new THREE.AnimationMixer(flamingo);
 				mixer.clipAction(gltf.animations[0]).setDuration(1).play();
 				mixers.push(mixer);
+				console.log(gltf.animations[0]);
+
 			});
 			animation3();
 			break;
@@ -553,10 +557,15 @@ function animation2() {
 
 
 function animation3() {
+	mesh.rotation.x += 0.03
+	mesh.rotation.y += 0.03
+	point.rotation.copy(mesh.rotation);
 	render();
 	var delta = clock.getDelta();
 	for (var i = 0; i < mixers.length; i++)
 		mixers[0].update(delta);
+		// mixers[0].update(delta);
+	console.log(mixers[0]);
 	animationID = requestAnimationFrame(animation3);
 }
 

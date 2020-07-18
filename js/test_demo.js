@@ -539,10 +539,14 @@ function animation2() {
 
 
 function animation3() {
+	mesh.rotation.x += 0.03
+	mesh.rotation.y += 0.03
+	point.rotation.copy(mesh.rotation);
 	render();
 	var delta = clock.getDelta();
 	for (var i = 0; i < mixers.length; i++)
 		mixers[0].update(delta);
+		// mixers[0].update(delta);
 	console.log(mixers.length);
 	id_animation = requestAnimationFrame(animation3);
 }
