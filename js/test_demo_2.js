@@ -462,7 +462,7 @@ var pivot = new THREE.Group();
 function animation(id) {
 	if (type == null)
 		return;
-	
+
 	root = mesh.position.clone();
 	cancelAnimationFrame(animationID);
 
@@ -475,18 +475,25 @@ function animation(id) {
 			break;
 		case 3:
 			scene.add(hemiLight);
-			pivot.remove(flamingo);
-			scene.add(pivot);
+			for (var i = pivot.children.length -1 ; i >=0; i--) {
+				pivot.remove(pivot.children[i]);
+			}
 			// const hemiLightHelper = new THREE.HemisphereLightHelper(hemiLight, 10);
 			// scene.add(hemiLightHelper);
 			mixers = [];
-			flamingoLoader.load('models/gltf/Flamingo.glb', function(gltf){
-				addAnimal(gltf);
-			});
+
+			for (var i = 0; i < 10; i++) {
+				const bird = ['Stork', 'Parrot', 'Flamingo'][Math.round(Math.random() * 2)]
+				flamingoLoader.load('models/gltf/' + bird + '.glb', function (gltf) {
+					addAnimal(gltf);
+					pivot.add(flamingo);
+				});
+			}
+
 			setTimeout(function () {
-				pivot.add(flamingo);
+				scene.add(pivot);
 				animation3();
-			}, 100);
+			}, 200);
 			break;
 		case 4:
 			animation4();
@@ -552,10 +559,10 @@ function animation3() {
 	mesh.rotation.y += delta;
 	point.rotation.copy(mesh.rotation);
 
-	pivot.rotation.y += Math.sin((delta * factor) / 2) * Math.cos((delta * factor) / 2) * 5.5;
+	pivot.rotation.y += Math.sin((delta * factor) / 2) * Math.cos((delta * factor) / 2) * 2.5;
 
 	for (var i = 0; i < mixers.length; i++)
-		mixers[0].update(delta * speed);
+		mixers[i].update(delta * speed);
 
 	render();
 	animationID = requestAnimationFrame(animation3);
