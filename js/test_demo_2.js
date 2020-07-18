@@ -584,7 +584,7 @@ function addAnimal(mesh2, clip, speed, factor, duration, x, y, z, scale, fudgeCo
 	mesh2.receiveShadow = true;
 
 	pivot = new THREE.Group();
-
+	pivot.position.copy(root);
 	scene.add(pivot);
 	pivot.add(mesh2);
 	pivots.push(pivot);
