@@ -98,7 +98,7 @@ function init() {
 	scene.background = new THREE.Color("#343A40");
 
 	// Grid
-	const Grid = new THREE.GridHelper(400, 50, "#A3BAC3", "#A3BAC3");
+	const Grid = new THREE.GridHelper(4000, 50, "#A3BAC3", "#A3BAC3");
 	scene.add(Grid);
 
 	// Coordinate axes
@@ -177,7 +177,7 @@ function init() {
 
 	// Init plane for casting shadow
 	{
-		const planeSize = 400;
+		const planeSize = 4000;
 		const planeGeo = new THREE.PlaneGeometry(planeSize, planeSize);
 		const planeMat = new THREE.MeshPhongMaterial({
 			side: THREE.DoubleSide,
@@ -190,7 +190,7 @@ function init() {
 
 	// Init main light source
 	{
-		pointLight = new THREE.PointLight("#F5F5F5", 2);
+		pointLight = new THREE.PointLight("#F5F5F5", 3, Infinity);
 		pointLight.color.setHSL(0.1, 1, 0.95);
 		pointLight.castShadow = true;
 		pointLightHelper = new THREE.PointLightHelper(pointLight, 5);
@@ -474,6 +474,8 @@ function animation(id) {
 			animation2();
 			break;
 		case 3:
+			scene.background = new THREE.Color("#BFDBF7");
+			// scene.background = new THREE.Color('skyblue');
 			scene.add(hemiLight);
 			// const hemiLightHelper = new THREE.HemisphereLightHelper(hemiLight, 10);
 			// scene.add(hemiLightHelper);
