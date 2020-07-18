@@ -465,7 +465,7 @@ function animation(id) {
 
 	root = mesh.position.clone();
 	cancelAnimationFrame(animationID);
-	
+
 	switch (id) {
 		case 1:
 			animation1();
@@ -489,8 +489,7 @@ function animation(id) {
 				const s = 0.35;
 				const speed = 2;
 				const factor = 0.25 + Math.random();
-				for (let i = 0; i<10; i++)
-				{
+				for (let i = 0; i < 10; i++) {
 					const x = (50 + Math.random() * 100) * (Math.round(Math.random()) ? -1 : 1);
 					const y = -30 + Math.random() * 50;
 					const z = -5 + Math.random() * 10;
@@ -500,7 +499,7 @@ function animation(id) {
 			});
 
 			// setTimeout(function () {
-				animation3();
+			animation3();
 			// }, 200);
 			break;
 		case 4:
@@ -508,10 +507,10 @@ function animation(id) {
 			break;
 		default:
 			scene.remove(hemiLight);
-			for (let i = 0; i<animationID_4.length;++i)
+			for (let i = 0; i < animationID_4.length; ++i)
 				cancelAnimationFrame(animationID_4[i]);
 			animationID_4 = [];
-			for (let i = 0; i<pivots.length;++i)
+			for (let i = 0; i < pivots.length; ++i)
 				scene.remove(pivots[i]);
 			animationID_4 = [];
 
@@ -542,10 +541,9 @@ function addAnimal(mesh2, clip, speed, factor, duration, x, y, z, scale, fudgeCo
 	mesh2.receiveShadow = true;
 
 	pivot = new THREE.Group();
-	console.log(mesh2);
-	
+	pivot.position.copy(root);
 	scene.add(pivot);
-	console.log(scene.children)
+	
 	pivot.add(mesh2);
 
 	pivots.push(pivot);
