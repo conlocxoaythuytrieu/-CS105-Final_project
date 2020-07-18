@@ -89,10 +89,6 @@ class MinMaxGUIHelper {
 	}
 }
 
-var mixers = [];
-var clock = new THREE.Clock();
-var flamingoLoader = new GLTFLoader();
-
 init();
 render();
 
@@ -210,8 +206,10 @@ function init() {
 }
 
 function render() {
+	renderer.clear();
 	renderer.render(scene, currentCamera);
 	// console.log("scene.children", scene.children);
+
 }
 
 function addMesh(meshID) {
@@ -454,15 +452,17 @@ function onDocumentMouseDown(event) {
 	render();
 }
 
-var root, flamingo = null;
-var speed = 2,
-	factor = 0.25 + Math.random();
-var pivot = new THREE.Group();
+var root, pivot;
+var flamingo = null,
+	pivots = [],
+	FLOOR = 0,
+	mixer = new THREE.AnimationMixer(scene);
+var animalLoader = new GLTFLoader();
 
 function animation(id) {
 	if (type == null)
 		return;
-	
+
 	root = mesh.position.clone();
 	cancelAnimationFrame(animationID);
 
@@ -475,16 +475,28 @@ function animation(id) {
 			break;
 		case 3:
 			scene.add(hemiLight);
-			pivot.remove(flamingo);
-			scene.add(pivot);
 			// const hemiLightHelper = new THREE.HemisphereLightHelper(hemiLight, 10);
 			// scene.add(hemiLightHelper);
-			mixers = [];
-			flamingoLoader.load('models/gltf/Flamingo.glb', function(gltf){
-				addAnimal(gltf);
+
+			// const bird = ['Stork', 'Parrot', 'Flamingo', 'Horse'][Math.round(Math.random() * 3)]
+			// const speed = bird === 'Stork' ? 0.5 : bird === 'Flamingo' ? 2 : 5
+			// const factor = bird === 'Stork' ? 0.5 + Math.random() : bird === 'Flamingo' ? 0.25 + Math.random() : 1 + Math.random() - 0.5
+
+			animalLoader.load('models/gltf/Flamingo.glb', function (gltf) {
+				const animalmesh = gltf.scene.children[0];
+				const clip = gltf.animations[0];
+
+				const s = 0.35;
+				const x = (mesh.position.x + mesh.geometry.parameters.width / 2 + Math.random() * 100) * (Math.round(Math.random()) ? -1 : 1);
+				const y = -30 + Math.random() * 50;
+				const z = -5 + Math.random() * 10;
+				const speed = 2;
+				const factor = 0.25 + Math.random();
+
+				addAnimal(animalmesh, clip, speed, factor, 1, x, FLOOR + y, z, s);
 			});
+
 			setTimeout(function () {
-				pivot.add(flamingo);
 				animation3();
 			}, 100);
 			break;
@@ -500,6 +512,31 @@ function animation(id) {
 	render();
 }
 window.animation = animation;
+
+function addAnimal(mesh, clip, speed, factor, duration, x, y, z, scale, fudgeColor) {
+	mesh = mesh.clone();
+	mesh.material = mesh.material.clone();
+
+	if (fudgeColor)
+		mesh.material.color.offsetHSL(0, Math.random() * 0.5 - 0.25, Math.random() * 0.5 - 0.25);
+
+	mesh.speed = speed;
+	mesh.factor = factor;
+
+	mixer.clipAction(clip, mesh).setDuration(duration).startAt(-duration * Math.random()).play();
+
+	mesh.position.set(x, y, z);
+	mesh.rotation.set(0, x > 0 ? Math.PI : 0, 0);
+	mesh.scale.set(scale, scale, scale);
+
+	mesh.castShadow = true;
+	mesh.receiveShadow = true;
+
+	pivot = new THREE.Group();
+	pivot.add(mesh);
+	scene.add(pivot);
+	pivots.push(pivot);
+}
 
 var ani1_step = 0.25;
 
@@ -537,55 +574,31 @@ function animation2() {
 	mesh.position.y = 30 * Math.sin(ani2_step) + root.y;
 	point.position.copy(mesh.position);
 
-	mesh.rotation.x += 0.03
-	mesh.rotation.y += 0.03
+	mesh.rotation.x += 0.03;
+	mesh.rotation.y += 0.03;
 	point.rotation.copy(mesh.rotation);
 
 	render();
 	animationID = requestAnimationFrame(animation2);
 }
 
-function animation3() {
-	var delta = clock.getDelta();
+var clock = new THREE.Clock();
+var delta = clock.getDelta();
 
+function animation3() {
+	mixer.update(delta);
 	mesh.rotation.x += delta;
 	mesh.rotation.y += delta;
 	point.rotation.copy(mesh.rotation);
 
-	pivot.rotation.y += Math.sin((delta * factor) / 2) * Math.cos((delta * factor) / 2) * 5.5;
+	for (var i = 0; i < pivots.length; i++) {
+		var pivot = pivots[i];
 
-	for (var i = 0; i < mixers.length; i++)
-		mixers[0].update(delta * speed);
+		pivot.rotation.y += Math.sin((delta * pivot.factor) / 2) * Math.cos((delta * pivot.factor) / 2) * 2.5;
+	}
 
 	render();
 	animationID = requestAnimationFrame(animation3);
-}
-
-
-function animation4() {
-	var a = 1;
-};
-
-function addAnimal(gltf) {
-	flamingo = gltf.scene.children[0];
-
-	{
-		const s = 0.35;
-		flamingo.scale.set(s, s, s);
-		const x = (mesh.position.x + mesh.geometry.parameters.width / 2 + Math.random() * 100) * (Math.round(Math.random()) ? -1 : 1);
-		const y = 30 + Math.random() * 20;
-		const z = 5 + Math.random() * 10;
-		flamingo.position.set(x, y, z);
-		flamingo.rotation.set(0, x > 0 ? Math.PI : 0, 0);
-	}
-
-	flamingo.castShadow = true;
-	flamingo.receiveShadow = true;
-
-	var mixer = new THREE.AnimationMixer(flamingo);
-	mixer.clipAction(gltf.animations[0]).setDuration(1).play();
-	mixers.push(mixer);
-
 }
 
 function updateCamera() {
