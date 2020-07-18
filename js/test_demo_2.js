@@ -459,21 +459,12 @@ var speed = 2,
 	factor = 0.25 + Math.random();
 var pivot = new THREE.Group();
 
-scene.add(pivot);
-
 function animation(id) {
 	if (type == null)
 		return;
-
+	
 	root = mesh.position.clone();
 	cancelAnimationFrame(animationID);
-
-	if (flamingo) {
-		if (control.object && control.object.name == "mesh_0")
-			control.detach();
-		scene.remove(flamingo);
-		flamingo = null;
-	}
 
 	switch (id) {
 		case 1:
@@ -484,30 +475,13 @@ function animation(id) {
 			break;
 		case 3:
 			scene.add(hemiLight);
+			pivot.remove(flamingo);
+			scene.add(pivot);
 			// const hemiLightHelper = new THREE.HemisphereLightHelper(hemiLight, 10);
 			// scene.add(hemiLightHelper);
 			mixers = [];
-			flamingoLoader.load('models/gltf/Flamingo.glb', function (gltf) {
-				flamingo = gltf.scene.children[0];
-
-				{
-					const s = 0.35;
-					flamingo.scale.set(s, s, s);
-					const x = (mesh.position.x + mesh.geometry.parameters.width / 2 + Math.random() * 100) * (Math.round(Math.random()) ? -1 : 1);
-					const y = 30 + Math.random() * 20;
-					const z = 5 + Math.random() * 10;
-					flamingo.position.set(x, y, z);
-					flamingo.rotation.set(0, x > 0 ? Math.PI : 0, 0);
-				}
-
-				flamingo.castShadow = true;
-				flamingo.receiveShadow = true;
-				// scene.add(flamingo);
-
-				var mixer = new THREE.AnimationMixer(flamingo);
-				mixer.clipAction(gltf.animations[0]).setDuration(1).play();
-				mixers.push(mixer);
-
+			flamingoLoader.load('models/gltf/Flamingo.glb', function(gltf){
+				addAnimal(gltf);
 			});
 			setTimeout(function () {
 				pivot.add(flamingo);
@@ -518,6 +492,7 @@ function animation(id) {
 			animation4();
 			break;
 		default:
+			scene.remove(pivot);
 			scene.remove(hemiLight);
 			break;
 	}
@@ -590,6 +565,28 @@ function animation3() {
 function animation4() {
 	var a = 1;
 };
+
+function addAnimal(gltf) {
+	flamingo = gltf.scene.children[0];
+
+	{
+		const s = 0.35;
+		flamingo.scale.set(s, s, s);
+		const x = (mesh.position.x + mesh.geometry.parameters.width / 2 + Math.random() * 100) * (Math.round(Math.random()) ? -1 : 1);
+		const y = 30 + Math.random() * 20;
+		const z = 5 + Math.random() * 10;
+		flamingo.position.set(x, y, z);
+		flamingo.rotation.set(0, x > 0 ? Math.PI : 0, 0);
+	}
+
+	flamingo.castShadow = true;
+	flamingo.receiveShadow = true;
+
+	var mixer = new THREE.AnimationMixer(flamingo);
+	mixer.clipAction(gltf.animations[0]).setDuration(1).play();
+	mixers.push(mixer);
+
+}
 
 function updateCamera() {
 	currentCamera.updateProjectionMatrix();
