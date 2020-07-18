@@ -251,7 +251,6 @@ function addMesh(meshID) {
 			break;
 	}
 
-
 	point.geometry = mesh.geometry;
 	setMaterial(3)
 
@@ -459,13 +458,14 @@ var flamingo = null,
 	mixer = new THREE.AnimationMixer(scene);
 var animalLoader = new GLTFLoader();
 var animationID_4 = [];
+
 function animation(id) {
 	if (type == null)
 		return;
 
 	root = mesh.position.clone();
 	cancelAnimationFrame(animationID);
-	
+
 	switch (id) {
 		case 1:
 			animation1();
@@ -478,10 +478,6 @@ function animation(id) {
 			// const hemiLightHelper = new THREE.HemisphereLightHelper(hemiLight, 10);
 			// scene.add(hemiLightHelper);
 
-			// const bird = ['Stork', 'Parrot', 'Flamingo', 'Horse'][Math.round(Math.random() * 3)]
-			// const speed = bird === 'Stork' ? 0.5 : bird === 'Flamingo' ? 2 : 5
-			// const factor = bird === 'Stork' ? 0.5 + Math.random() : bird === 'Flamingo' ? 0.25 + Math.random() : 1 + Math.random() - 0.5
-
 			animalLoader.load('models/gltf/Flamingo.glb', function (gltf) {
 				const animalmesh = gltf.scene.children[0];
 				const clip = gltf.animations[0];
@@ -489,32 +485,78 @@ function animation(id) {
 				const s = 0.35;
 				const speed = 2;
 				const factor = 0.25 + Math.random();
-				for (let i = 0; i<10; i++)
-				{
-					const x = (50 + Math.random() * 100) * (Math.round(Math.random()) ? -1 : 1);
-					const y = -30 + Math.random() * 50;
+
+				for (let i = 0; i < 5; i++) {
+					const x = (60 + Math.random() * 100) * (Math.round(Math.random()) ? -1 : 1);
+					const y = 80 + Math.random() * 50;
 					const z = -5 + Math.random() * 10;
 					addAnimal(animalmesh, clip, speed, factor, 1, x, FLOOR + y, z, s);
 				}
-
 			});
 
-			// setTimeout(function () {
-				animation3();
-			// }, 200);
+			animalLoader.load('models/gltf/Stork.glb', function (gltf) {
+				const animalmesh = gltf.scene.children[0];
+				const clip = gltf.animations[0];
+
+				const s = 0.35;
+				const speed = 0.5;
+				const factor = 0.5 + Math.random();
+
+				for (let i = 0; i < 5; i++) {
+					const x = (60 + Math.random() * 100) * (Math.round(Math.random()) ? -1 : 1);
+					const y = 80 + Math.random() * 50;
+					const z = -5 + Math.random() * 10;
+					addAnimal(animalmesh, clip, speed, factor, 1, x, FLOOR + y, z, s);
+				}
+			});
+
+			animalLoader.load('models/gltf/Parrot.glb', function (gltf) {
+				const animalmesh = gltf.scene.children[0];
+				const clip = gltf.animations[0];
+
+				const s = 0.35;
+				const speed = 5;
+				const factor = 1 + Math.random() - 0.5
+
+				for (let i = 0; i < 5; i++) {
+					const x = (60 + Math.random() * 100) * (Math.round(Math.random()) ? -1 : 1);
+					const y = 80 + Math.random() * 50;
+					const z = -5 + Math.random() * 10;
+					addAnimal(animalmesh, clip, speed, factor, 1, x, FLOOR + y, z, s);
+				}
+			});
+
+			animalLoader.load('models/gltf/Horse.glb', function (gltf) {
+				const animalmesh = gltf.scene.children[0];
+				const clip = gltf.animations[0];
+
+				const s = 0.35;
+				const speed = 2;
+				const factor = 1.25 + Math.random();
+
+				for (let i = 0; i < 5; i++) {
+					const x = (90 + Math.random() * 100) * (Math.round(Math.random()) ? -1 : 1);
+					// const y = 60 + Math.random() * 50;
+					const z = -5 + Math.random() * 10;
+					addAnimal(animalmesh, clip, speed, factor, 1, x, FLOOR, z, s);
+				}
+			});
+
+			animation3();
 			break;
 		case 4:
 			animation4();
 			break;
 		default:
 			scene.remove(hemiLight);
-			for (let i = 0; i<animationID_4.length;++i)
-				cancelAnimationFrame(animationID_4[i]);
-			animationID_4 = [];
-			for (let i = 0; i<pivots.length;++i)
-				scene.remove(pivots[i]);
-			animationID_4 = [];
 
+			for (let i = 0; i < animationID_4.length; ++i)
+				cancelAnimationFrame(animationID_4[i]);
+
+			for (let i = 0; i < pivots.length; ++i)
+				scene.remove(pivots[i]);
+
+			animationID_4 = [];
 			break;
 	}
 
@@ -542,12 +584,9 @@ function addAnimal(mesh2, clip, speed, factor, duration, x, y, z, scale, fudgeCo
 	mesh2.receiveShadow = true;
 
 	pivot = new THREE.Group();
-	console.log(mesh2);
-	
-	scene.add(pivot);
-	console.log(scene.children)
-	pivot.add(mesh2);
 
+	scene.add(pivot);
+	pivot.add(mesh2);
 	pivots.push(pivot);
 }
 
@@ -599,14 +638,13 @@ var clock = new THREE.Clock();
 
 function animation3() {
 	var delta = clock.getDelta();
-	// console.log(delta);
 	mixer.update(delta);
+
 	mesh.rotation.x += delta;
 	mesh.rotation.y += delta;
 	point.rotation.copy(mesh.rotation);
 
 	for (var i = 0; i < pivots.length; i++) {
-		// console.log(pivots[i].factor);
 		const f = pivot.children[0].factor;
 		pivots[i].rotation.y += Math.sin((delta * f) / 2) * Math.cos((delta * f) / 2) * 2.5;
 	}
