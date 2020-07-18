@@ -457,7 +457,7 @@ var flamingo = null,
 	FLOOR = 0,
 	mixer = new THREE.AnimationMixer(scene);
 var animalLoader = new GLTFLoader();
-var animationID_4 = [];
+var animationID3 = [];
 
 function animation(id) {
 	if (type == null)
@@ -479,7 +479,7 @@ function animation(id) {
 			scene.add(hemiLight);
 			// const hemiLightHelper = new THREE.HemisphereLightHelper(hemiLight, 10);
 			// scene.add(hemiLightHelper);
-
+			const box = new THREE.Box3().setFromObject(type == 1 ? point : mesh);
 			animalLoader.load('models/gltf/Flamingo.glb', function (gltf) {
 				const animalmesh = gltf.scene.children[0];
 				const clip = gltf.animations[0];
@@ -489,7 +489,7 @@ function animation(id) {
 				const factor = 0.25 + Math.random();
 
 				for (let i = 0; i < 5; i++) {
-					const x = (60 + Math.random() * 100) * (Math.round(Math.random()) ? -1 : 1);
+					const x = ((70 + (box.max.x - box.min.x) / 2) + Math.random() * 100) * (Math.round(Math.random()) ? -1 : 1);
 					const y = 80 + Math.random() * 50;
 					const z = -5 + Math.random() * 10;
 					addAnimal(animalmesh, clip, speed, factor, 1, x, FLOOR + y, z, s, 0, 0);
@@ -505,7 +505,7 @@ function animation(id) {
 				const factor = 0.5 + Math.random();
 
 				for (let i = 0; i < 5; i++) {
-					const x = (60 + Math.random() * 100) * (Math.round(Math.random()) ? -1 : 1);
+					const x = ((70 + (box.max.x - box.min.x) / 2) + Math.random() * 100) * (Math.round(Math.random()) ? -1 : 1);
 					const y = 80 + Math.random() * 50;
 					const z = -5 + Math.random() * 10;
 					addAnimal(animalmesh, clip, speed, factor, 1, x, FLOOR + y, z, s, 0, 0);
@@ -521,7 +521,7 @@ function animation(id) {
 				const factor = 1 + Math.random() - 0.5
 
 				for (let i = 0; i < 5; i++) {
-					const x = (60 + Math.random() * 100) * (Math.round(Math.random()) ? -1 : 1);
+					const x = ((70 + (box.max.x - box.min.x) / 2) + Math.random() * 100) * (Math.round(Math.random()) ? -1 : 1);
 					const y = 80 + Math.random() * 50;
 					const z = -5 + Math.random() * 10;
 					addAnimal(animalmesh, clip, speed, factor, 1, x, FLOOR + y, z, s, 0, 0);
@@ -537,7 +537,7 @@ function animation(id) {
 				const factor = 1.25 + Math.random();
 
 				for (let i = 0; i < 5; i++) {
-					const x = (90 + Math.random() * 100) * (Math.round(Math.random()) ? -1 : 1);
+					const x = ((90 + (box.max.x - box.min.x) / 2) + Math.random() * 100) * (Math.round(Math.random()) ? -1 : 1);
 					// const y = 60 + Math.random() * 50;
 					const z = -5 + Math.random() * 10;
 					addAnimal(animalmesh, clip, speed, factor, 1, x, FLOOR, z, s, 1, 1);
@@ -545,19 +545,16 @@ function animation(id) {
 			});
 			animation3();
 			break;
-		case 4:
-			animation4();
-			break;
 		default:
 			scene.remove(hemiLight);
 
-			for (let i = 0; i < animationID_4.length; ++i)
-				cancelAnimationFrame(animationID_4[i]);
+			for (let i = 0; i < animationID3.length; ++i)
+				cancelAnimationFrame(animationID3[i]);
 
 			for (let i = 0; i < pivots.length; ++i)
 				scene.remove(pivots[i]);
 
-			animationID_4 = [];
+			animationID3 = [];
 			break;
 	}
 
@@ -585,8 +582,8 @@ function addAnimal(mesh2, clip, speed, factor, duration, x, y, z, scale, fudgeCo
 	mesh2.receiveShadow = true;
 
 	pivot = new THREE.Group();
-	
-	if(typeAnimal==0) pivot.position.copy(root);
+
+	if (typeAnimal == 0) pivot.position.copy(root);
 	pivot.rotation_check = 0;
 	scene.add(pivot);
 	pivot.add(mesh2);
@@ -654,7 +651,7 @@ function animation3() {
 
 	render();
 	let tam = requestAnimationFrame(animation3);
-	animationID_4.push(tam);
+	animationID3.push(tam);
 }
 
 function updateCamera() {
