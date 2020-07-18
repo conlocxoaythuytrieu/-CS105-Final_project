@@ -455,17 +455,26 @@ function onDocumentMouseDown(event) {
 }
 
 var root, flamingo = null;
+var speed = 2,
+	factor = 0.25 + Math.random();
+var pivot = new THREE.Group();
+
+scene.add(pivot);
 
 function animation(id) {
-	if (type == null) return;
+	if (type == null)
+		return;
+
 	root = mesh.position.clone();
 	cancelAnimationFrame(animationID);
+
 	if (flamingo) {
 		if (control.object && control.object.name == "mesh_0")
 			control.detach();
 		scene.remove(flamingo);
 		flamingo = null;
 	}
+
 	switch (id) {
 		case 1:
 			animation1();
@@ -481,23 +490,29 @@ function animation(id) {
 			flamingoLoader.load('models/gltf/Flamingo.glb', function (gltf) {
 				flamingo = gltf.scene.children[0];
 
-				var s = 0.35;
-				flamingo.scale.set(s, s, s);
-				flamingo.position.y = 15;
-				flamingo.rotation.y = -1;
+				{
+					const s = 0.35;
+					flamingo.scale.set(s, s, s);
+					const x = (mesh.position.x + mesh.geometry.parameters.width / 2 + Math.random() * 100) * (Math.round(Math.random()) ? -1 : 1);
+					const y = 30 + Math.random() * 20;
+					const z = 5 + Math.random() * 10;
+					flamingo.position.set(x, y, z);
+					flamingo.rotation.set(0, x > 0 ? Math.PI : 0, 0);
+				}
 
 				flamingo.castShadow = true;
 				flamingo.receiveShadow = true;
-				scene.add(flamingo);
+				// scene.add(flamingo);
+
 				var mixer = new THREE.AnimationMixer(flamingo);
 				mixer.clipAction(gltf.animations[0]).setDuration(1).play();
 				mixers.push(mixer);
 
 			});
 			setTimeout(function () {
-				console.log("a", flamingo);
+				pivot.add(flamingo);
 				animation3();
-			}, 500);
+			}, 100);
 			break;
 		case 4:
 			animation4();
@@ -555,22 +570,17 @@ function animation2() {
 	animationID = requestAnimationFrame(animation2);
 }
 
-
 function animation3() {
-	ani2_step += 0.05;
+	var delta = clock.getDelta();
 
-
-	mesh.rotation.x += 0.03
-	mesh.rotation.y += 0.03
+	mesh.rotation.x += delta;
+	mesh.rotation.y += delta;
 	point.rotation.copy(mesh.rotation);
 
-	var delta = clock.getDelta();
-	flamingo.rotation.y += Math.sin((delta * 2) / 2) * Math.cos((delta * 2) / 2) * 1.5;
-	flamingo.position.z = 100 * Math.cos(ani2_step) + root.x;
-	flamingo.position.x = 100 * Math.sin(ani2_step) + root.y;
+	pivot.rotation.y += Math.sin((delta * factor) / 2) * Math.cos((delta * factor) / 2) * 5.5;
 
 	for (var i = 0; i < mixers.length; i++)
-		mixers[0].update(delta);
+		mixers[0].update(delta * speed);
 
 	render();
 	animationID = requestAnimationFrame(animation3);
