@@ -492,7 +492,7 @@ function animation(id) {
 					const x = (60 + Math.random() * 100) * (Math.round(Math.random()) ? -1 : 1);
 					const y = 80 + Math.random() * 50;
 					const z = -5 + Math.random() * 10;
-					addAnimal(animalmesh, clip, speed, factor, 1, x, FLOOR + y, z, s);
+					addAnimal(animalmesh, clip, speed, factor, 1, x, FLOOR + y, z, s, 0, 0);
 				}
 			});
 
@@ -508,7 +508,7 @@ function animation(id) {
 					const x = (60 + Math.random() * 100) * (Math.round(Math.random()) ? -1 : 1);
 					const y = 80 + Math.random() * 50;
 					const z = -5 + Math.random() * 10;
-					addAnimal(animalmesh, clip, speed, factor, 1, x, FLOOR + y, z, s);
+					addAnimal(animalmesh, clip, speed, factor, 1, x, FLOOR + y, z, s, 0, 0);
 				}
 			});
 
@@ -524,7 +524,7 @@ function animation(id) {
 					const x = (60 + Math.random() * 100) * (Math.round(Math.random()) ? -1 : 1);
 					const y = 80 + Math.random() * 50;
 					const z = -5 + Math.random() * 10;
-					addAnimal(animalmesh, clip, speed, factor, 1, x, FLOOR + y, z, s);
+					addAnimal(animalmesh, clip, speed, factor, 1, x, FLOOR + y, z, s, 0, 0);
 				}
 			});
 
@@ -540,10 +540,9 @@ function animation(id) {
 					const x = (90 + Math.random() * 100) * (Math.round(Math.random()) ? -1 : 1);
 					// const y = 60 + Math.random() * 50;
 					const z = -5 + Math.random() * 10;
-					addAnimal(animalmesh, clip, speed, factor, 1, x, FLOOR, z, s);
+					addAnimal(animalmesh, clip, speed, factor, 1, x, FLOOR, z, s, 1, 1);
 				}
 			});
-
 			animation3();
 			break;
 		case 4:
@@ -566,7 +565,7 @@ function animation(id) {
 }
 window.animation = animation;
 
-function addAnimal(mesh2, clip, speed, factor, duration, x, y, z, scale, fudgeColor) {
+function addAnimal(mesh2, clip, speed, factor, duration, x, y, z, scale, fudgeColor, typeAnimal) {
 	mesh2 = mesh2.clone();
 	mesh2.material = mesh2.material.clone();
 
@@ -586,7 +585,9 @@ function addAnimal(mesh2, clip, speed, factor, duration, x, y, z, scale, fudgeCo
 	mesh2.receiveShadow = true;
 
 	pivot = new THREE.Group();
-	pivot.position.copy(root);
+	
+	if(typeAnimal==0) pivot.position.copy(root);
+	pivot.rotation_check = 0;
 	scene.add(pivot);
 	pivot.add(mesh2);
 	pivots.push(pivot);
