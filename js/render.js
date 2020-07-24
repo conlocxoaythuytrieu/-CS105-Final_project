@@ -476,8 +476,7 @@ function animation(id) {
 			scene.background = color_BFDBF7;
 			scene.fog = fog_BFDBF7;
 			scene.add(hemiLight);
-			// const hemiLightHelper = new THREE.HemisphereLightHelper(hemiLight, 10);
-			// scene.add(hemiLightHelper);
+			
 			const box = new THREE.Box3().setFromObject(type == 1 ? point : mesh);
 			animalLoader.load('models/gltf/Flamingo.glb', function (gltf) {
 				const animalmesh = gltf.scene.children[0];
@@ -537,7 +536,6 @@ function animation(id) {
 
 				for (let i = 0; i < 5; i++) {
 					const x = ((90 + (box.max.x - box.min.x) / 2) + Math.random() * 100) * (Math.round(Math.random()) ? -1 : 1);
-					// const y = 60 + Math.random() * 50;
 					const z = -5 + Math.random() * 10;
 					addAnimal(animalmesh, clip, speed, factor, 1, x, FLOOR, z, s, 1, 4);
 				}
