@@ -108,11 +108,9 @@ class MinMaxGUIHelper {
 }
 
 var color_343A40 = new THREE.Color("#343A40"),
-	color_BFDBF7 = new THREE.Color("#BFDBF7");
-var fog_343A40 = new THREE.Fog("#343A40", 0.5),
-	fog_BFDBF7 = new THREE.Fog("#BFDBF7", 0.5);
-
-var waterGeometry = new THREE.PlaneBufferGeometry(10000, 10000);
+	color_BFDBF7 = new THREE.Color("#BFDBF7", );
+var fog_343A40 = new THREE.Fog("#343A40", 0.5, 3000),
+	fog_BFDBF7 = new THREE.Fog(color_BFDBF7, 0.5, 3000);
 
 init();
 render();
@@ -123,7 +121,8 @@ function init() {
 	scene.background = color_343A40;
 
 	// Grid
-	const Grid = new THREE.GridHelper(4000, 50, "#A3BAC3", "#A3BAC3");
+	const planeSize = 5000;
+	const Grid = new THREE.GridHelper(planeSize, 50, "#A3BAC3", "#A3BAC3");
 	scene.add(Grid);
 
 	// Coordinate axes
@@ -147,7 +146,7 @@ function init() {
 		const fov = 75;
 		const aspectRatio = window.innerWidth / window.innerHeight;
 		const near = 0.1;
-		const far = 2000;
+		const far = 5000;
 		cameraPersp = new THREE.PerspectiveCamera(fov, aspectRatio, near, far);
 		currentCamera = cameraPersp;
 		currentCamera.position.set(1, 50, 100);
@@ -158,7 +157,7 @@ function init() {
 		folderCam.add(currentCamera, "fov", 1, 180).name("FOV").onChange(updateCamera);
 		const minMaxGUIHelper = new MinMaxGUIHelper(currentCamera, "near", "far");
 		folderCam.add(minMaxGUIHelper, "min", 0.1, 100, 0.1).name("Near").onChange(updateCamera);
-		folderCam.add(minMaxGUIHelper, "max", 200, 5000, 10).name("Far").onChange(updateCamera);
+		folderCam.add(minMaxGUIHelper, "max", 200, 6000, 10).name("Far").onChange(updateCamera);
 	}
 
 	ObjColorGUI = gui.addColor(new ColorGUIHelper(mesh.material, "color"), "value").name("Obj Color");
@@ -203,12 +202,13 @@ function init() {
 	});
 
 	// Init plane for casting shadow
+
+	const planeGeo = new THREE.PlaneGeometry(planeSize, planeSize);
+	const planeMat = new THREE.MeshPhongMaterial({
+		side: THREE.DoubleSide,
+	});
+
 	{
-		const planeSize = 4000;
-		const planeGeo = new THREE.PlaneGeometry(planeSize, planeSize);
-		const planeMat = new THREE.MeshPhongMaterial({
-			side: THREE.DoubleSide,
-		});
 		meshPlane = new THREE.Mesh(planeGeo, planeMat);
 		meshPlane.material.color.setHSL(0.095, 1, 0.75);
 		meshPlane.receiveShadow = true;
@@ -243,21 +243,16 @@ function init() {
 
 
 	// Sun
-	{
-		sun = new THREE.Vector3();
-
-	}
+	sun = new THREE.Vector3();
 
 	// Water
 	{
 		water = new Water(
-			waterGeometry, {
+			planeGeo, {
 				textureWidth: 512,
 				textureHeight: 512,
-				waterNormals: new THREE.TextureLoader().load('textures/waternormals.jpg', function (texture) {
-
+				waterNormals: new THREE.TextureLoader().load('../img/waternormals.jpg', function (texture) {
 					texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
-
 				}),
 				alpha: 1.0,
 				sunDirection: new THREE.Vector3(),
@@ -274,7 +269,7 @@ function init() {
 	// Skybox
 	{
 		sky = new Sky();
-		sky.scale.setScalar(10000);
+		sky.scale.setScalar(planeSize);
 
 		var uniforms = sky.material.uniforms;
 		uniforms['turbidity'].value = 10;
@@ -747,6 +742,7 @@ function animation3() {
 		let f = pivots[i].children[0].factor;
 		pivots[i].rotation.y += Math.sin((delta * f) / 2) * Math.cos((delta * f) / 2) * 2.5;
 	}
+	water.material.uniforms['time'].value += 1.0 / 60.0;
 
 	render();
 
@@ -758,17 +754,14 @@ function updateCamera() {
 	render();
 }
 
-var parameters = {
-	inclination: 0.49,
-	azimuth: 0.205
-};
-
-var pmremGenerator = new THREE.PMREMGenerator(renderer);
 
 function updateSun() {
+	let pmremGenerator = new THREE.PMREMGenerator(renderer);
+	let inclination = 0.49;
+	let azimuth = 0.205;
 
-	var theta = Math.PI * (parameters.inclination - 0.5);
-	var phi = 2 * Math.PI * (parameters.azimuth - 0.5);
+	let theta = Math.PI * (inclination - 0.5);
+	let phi = 2 * Math.PI * (azimuth - 0.5);
 
 	sun.x = Math.cos(phi);
 	sun.y = Math.sin(phi) * Math.sin(theta);
@@ -778,5 +771,4 @@ function updateSun() {
 	water.material.uniforms['sunDirection'].value.copy(sun).normalize();
 
 	scene.environment = pmremGenerator.fromScene(sky).texture;
-
 }
