@@ -39,9 +39,10 @@ var LightSwitch = false,
 	type = null,
 	pre_material = null;
 var animationID;
-var composer, afterimagePass, isPostProcessing = false,
-	water, sun, sky;
+var composer, afterimagePass, isPostProcessing = false;
+var water, sun, sky;
 
+// A bunch of shapes
 var BoxGeometry = new THREE.BoxGeometry(50, 50, 50, 20, 20, 20);
 var SphereGeometry = new THREE.SphereGeometry(30, 50, 50);
 var ConeGeometry = new THREE.ConeGeometry(30, 70, 50, 20);
@@ -54,6 +55,7 @@ var OctahedronGeometry = new THREE.OctahedronGeometry(30);
 var DodecahedronGeometry = new THREE.DodecahedronGeometry(30);
 var IcosahedronGeometry = new THREE.IcosahedronGeometry(30);
 
+// Material
 var BasicMaterial = new THREE.MeshBasicMaterial({
 	color: "#F5F5F5",
 	side: THREE.DoubleSide,
@@ -70,9 +72,16 @@ var PhongMaterial = new THREE.MeshPhongMaterial({
 	transparent: true
 });
 
+// Main objects on scene
 var mesh = new THREE.Mesh();
 var point = new THREE.Points();
 
+// Some colors that will use
+var color_343A40 = new THREE.Color("#343A40");
+var fog_343A40 = new THREE.Fog(color_343A40, 0.5, 3000),
+	fog_634A44 = new THREE.Fog("#634A44", 0.5, 3000);
+
+//  Class for GUI control
 class ColorGUIHelper {
 	constructor(object, prop) {
 		this.object = object;
@@ -106,11 +115,6 @@ class MinMaxGUIHelper {
 		this.object[this.maxprop] = v;
 	}
 }
-
-var color_343A40 = new THREE.Color("#343A40"),
-	color_BFDBF7 = new THREE.Color("#BFDBF7", );
-var fog_343A40 = new THREE.Fog("#343A40", 0.5, 3000),
-	fog_634A44 = new THREE.Fog("#634A44", 0.5, 3000);
 
 init();
 render();
@@ -164,6 +168,7 @@ function init() {
 
 	raycaster = new THREE.Raycaster();
 
+	// Render
 	{
 		renderer = new THREE.WebGLRenderer({
 			antialias: true,
@@ -176,7 +181,7 @@ function init() {
 		document.getElementById("rendering").appendChild(renderer.domElement);
 	}
 
-	// check when the browser size has changed and adjust the camera accordingly
+	// Check when the browser size has changed and adjust the camera accordingly
 	window.addEventListener("resize", function () {
 		const WIDTH = window.innerWidth;
 		const HEIGHT = window.innerHeight;
@@ -190,19 +195,20 @@ function init() {
 		render();
 	});
 
-	orbit = new OrbitControls(currentCamera, renderer.domElement);
-	orbit.update();
-	orbit.addEventListener("change", render);
+	{
+		orbit = new OrbitControls(currentCamera, renderer.domElement);
+		orbit.update();
+		orbit.addEventListener("change", render);
 
-	control = new TransformControls(currentCamera, renderer.domElement);
-	control.addEventListener("change", render);
+		control = new TransformControls(currentCamera, renderer.domElement);
+		control.addEventListener("change", render);
 
-	control.addEventListener("dragging-changed", function (event) {
-		orbit.enabled = !event.value;
-	});
+		control.addEventListener("dragging-changed", function (event) {
+			orbit.enabled = !event.value;
+		});
+	}
 
-	// Init plane for casting shadow
-
+	// Init plane for showing shadow
 	const planeGeo = new THREE.PlaneGeometry(planeSize, planeSize);
 	const planeMat = new THREE.MeshPhongMaterial({
 		side: THREE.DoubleSide,
@@ -214,19 +220,11 @@ function init() {
 		meshPlane.rotation.x = Math.PI * -.5;
 	}
 
-	// Init main light source
+	// Main light source
 	{
 		pointLight = new THREE.PointLight("#F5F5F5", 3, Infinity);
 		pointLight.castShadow = true;
 		pointLightHelper = new THREE.PointLightHelper(pointLight, 5);
-	}
-
-	// Init light source for animation 3
-	{
-		hemiLight = new THREE.HemisphereLight(0xffffff, 0xffffff, 0.5);
-		hemiLight.color.setHSL(0.6, 1, 0.6);
-		hemiLight.groundColor.setHSL(0.095, 1, 0.75);
-		hemiLight.position.set(0, 50, 0);
 	}
 
 	// Post processing
@@ -238,7 +236,6 @@ function init() {
 		afterimagePass.uniforms["damp"].value = 0.96;
 		composer.addPass(afterimagePass);
 	}
-
 
 	// Sun
 	sun = new THREE.Vector3();
@@ -275,11 +272,20 @@ function init() {
 		uniforms['mieCoefficient'].value = 0.005;
 		uniforms['mieDirectionalG'].value = 0.8;
 	}
+
+	// Sky light
+	{
+		hemiLight = new THREE.HemisphereLight(0xffffff, 0xffffff, 0.5);
+		hemiLight.color.setHSL(0.6, 1, 0.6);
+		hemiLight.groundColor.setHSL(0.095, 1, 0.75);
+		hemiLight.position.set(0, 50, 0);
+	}
 }
 
 function render() {
 	renderer.clear();
 	if (isPostProcessing)
+		// render differently for the effect after image
 		composer.render()
 	else
 		renderer.render(scene, currentCamera);
@@ -337,6 +343,8 @@ window.addMesh = addMesh;
 
 function setMaterial(materialID) {
 	type = materialID;
+
+	// Remove current object
 	pre_material != 1 ? scene.remove(mesh) : scene.remove(point);
 	gui.remove(ObjColorGUI);
 
@@ -493,7 +501,7 @@ function onDocumentMouseDown(event) {
 	mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
 	mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
-	// find intersections
+	// Find intersections
 	raycaster.setFromCamera(mouse, currentCamera);
 	let intersects = raycaster.intersectObjects(scene.children);
 	let check_obj = 0;
@@ -562,69 +570,72 @@ function animation(id) {
 			updateSun();
 
 			const box = new THREE.Box3().setFromObject(type == 1 ? point : mesh);
-			animalLoader.load('models/gltf/Flamingo.glb', function (gltf) {
-				const animalmesh = gltf.scene.children[0];
-				const clip = gltf.animations[0];
 
-				const s = 0.35;
-				const speed = 2;
-				const factor = 0.25 + Math.random();
+			{
+				animalLoader.load('models/gltf/Flamingo.glb', function (gltf) {
+					const animalmesh = gltf.scene.children[0];
+					const clip = gltf.animations[0];
 
-				for (let i = 0; i < 5; i++) {
-					const x = ((70 + (box.max.x - box.min.x) / 2) + Math.random() * 100) * (Math.round(Math.random()) ? -1 : 1);
-					const y = 80 + Math.random() * 50;
-					const z = -5 + Math.random() * 10;
-					addAnimal(animalmesh, clip, speed, factor, 1, x, y, z, s, 0, 1);
-				}
-			});
+					const s = 0.35;
+					const speed = 2;
+					const factor = 0.25 + Math.random();
 
-			animalLoader.load('models/gltf/Stork.glb', function (gltf) {
-				const animalmesh = gltf.scene.children[0];
-				const clip = gltf.animations[0];
+					for (let i = 0; i < 5; i++) {
+						const x = ((70 + (box.max.x - box.min.x) / 2) + Math.random() * 100) * (Math.round(Math.random()) ? -1 : 1);
+						const y = 80 + Math.random() * 50;
+						const z = -5 + Math.random() * 10;
+						addAnimal(animalmesh, clip, speed, factor, 1, x, y, z, s, 0, 1);
+					}
+				});
 
-				const s = 0.35;
-				const speed = 0.5;
-				const factor = 0.5 + Math.random();
+				animalLoader.load('models/gltf/Stork.glb', function (gltf) {
+					const animalmesh = gltf.scene.children[0];
+					const clip = gltf.animations[0];
 
-				for (let i = 0; i < 5; i++) {
-					const x = ((70 + (box.max.x - box.min.x) / 2) + Math.random() * 100) * (Math.round(Math.random()) ? -1 : 1);
-					const y = 80 + Math.random() * 50;
-					const z = -5 + Math.random() * 10;
-					addAnimal(animalmesh, clip, speed, factor, 1, x, y, z, s, 0, 2);
-				}
-			});
+					const s = 0.35;
+					const speed = 0.5;
+					const factor = 0.5 + Math.random();
 
-			animalLoader.load('models/gltf/Parrot.glb', function (gltf) {
-				const animalmesh = gltf.scene.children[0];
-				const clip = gltf.animations[0];
+					for (let i = 0; i < 5; i++) {
+						const x = ((70 + (box.max.x - box.min.x) / 2) + Math.random() * 100) * (Math.round(Math.random()) ? -1 : 1);
+						const y = 80 + Math.random() * 50;
+						const z = -5 + Math.random() * 10;
+						addAnimal(animalmesh, clip, speed, factor, 1, x, y, z, s, 0, 2);
+					}
+				});
 
-				const s = 0.35;
-				const speed = 5;
-				const factor = 1 + Math.random() - 0.5
+				animalLoader.load('models/gltf/Parrot.glb', function (gltf) {
+					const animalmesh = gltf.scene.children[0];
+					const clip = gltf.animations[0];
 
-				for (let i = 0; i < 5; i++) {
-					const x = ((70 + (box.max.x - box.min.x) / 2) + Math.random() * 100) * (Math.round(Math.random()) ? -1 : 1);
-					const y = 80 + Math.random() * 50;
-					const z = -5 + Math.random() * 10;
-					addAnimal(animalmesh, clip, speed, factor, 1, x, y, z, s, 0, 3);
-				}
-			});
+					const s = 0.35;
+					const speed = 5;
+					const factor = 1 + Math.random() - 0.5
 
-			animalLoader.load('models/gltf/Horse.glb', function (gltf) {
-				const animalmesh = gltf.scene.children[0];
-				const clip = gltf.animations[0];
+					for (let i = 0; i < 5; i++) {
+						const x = ((70 + (box.max.x - box.min.x) / 2) + Math.random() * 100) * (Math.round(Math.random()) ? -1 : 1);
+						const y = 80 + Math.random() * 50;
+						const z = -5 + Math.random() * 10;
+						addAnimal(animalmesh, clip, speed, factor, 1, x, y, z, s, 0, 3);
+					}
+				});
 
-				const s = 0.35;
-				const speed = 2.5;
-				const factor = 1.25 + Math.random();
+				animalLoader.load('models/gltf/Horse.glb', function (gltf) {
+					const animalmesh = gltf.scene.children[0];
+					const clip = gltf.animations[0];
 
-				for (let i = 0; i < 5; i++) {
-					const x = ((90 + (box.max.x - box.min.x) / 2) + Math.random() * 100) * (Math.round(Math.random()) ? -1 : 1);
-					// const y = 60 + Math.random() * 50;
-					const z = -5 + Math.random() * 10;
-					addAnimal(animalmesh, clip, speed, factor, 1, x, 0, z, s, 1, 4);
-				}
-			});
+					const s = 0.35;
+					const speed = 2.5;
+					const factor = 1.25 + Math.random();
+
+					for (let i = 0; i < 5; i++) {
+						const x = ((90 + (box.max.x - box.min.x) / 2) + Math.random() * 100) * (Math.round(Math.random()) ? -1 : 1);
+						// const y = 60 + Math.random() * 50;
+						const z = -5 + Math.random() * 10;
+						addAnimal(animalmesh, clip, speed, factor, 1, x, 0, z, s, 1, 4);
+					}
+				});
+			}
 
 			animation3();
 			break;
