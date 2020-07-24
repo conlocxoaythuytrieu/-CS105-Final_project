@@ -14,17 +14,27 @@ import {
 import {
 	GLTFLoader
 } from '../js/GLTFLoader.js';
+import {
+	EffectComposer
+} from '../js/EffectComposer.js';
+import {
+	RenderPass
+} from '../js/RenderPass.js';
+import {
+	AfterimagePass
+} from '../js/AfterimagePass.js';
 
 
 var cameraPersp, cameraOrtho, currentCamera;
-var scene, renderer, control, orbit, gui, texture, meshPlane, raycaster, pointLight, pointLightHelper, hemiLight;
+var scene, renderer, control, orbit, gui, texture, raycaster;
+var meshPlane, pointLight, pointLightHelper, hemiLight, pointLightColorGUI, ObjColorGUI;
 var textureLoader = new THREE.TextureLoader(),
 	mouse = new THREE.Vector2();
 var LightSwitch = false,
 	type = null,
 	pre_material = null;
 var animationID;
-var pointLightColorGUI, ObjColorGUI;
+var composer, afterimagePass, isPostProcessing = false;
 
 var BoxGeometry = new THREE.BoxGeometry(50, 50, 50, 20, 20, 20);
 var SphereGeometry = new THREE.SphereGeometry(30, 50, 50);
@@ -89,8 +99,10 @@ class MinMaxGUIHelper {
 	}
 }
 
-var color_343A40 = new THREE.Color("#343A40"), color_BFDBF7 = new THREE.Color("#BFDBF7");
-var fog_343A40 = new THREE.Fog("#343A40", 0.5), fog_BFDBF7 = new THREE.Fog("#BFDBF7", 0.5);
+var color_343A40 = new THREE.Color("#343A40"),
+	color_BFDBF7 = new THREE.Color("#BFDBF7");
+var fog_343A40 = new THREE.Fog("#343A40", 0.5),
+	fog_BFDBF7 = new THREE.Fog("#BFDBF7", 0.5);
 init();
 render();
 
@@ -98,7 +110,7 @@ function init() {
 	// Scene
 	scene = new THREE.Scene();
 	scene.background = color_343A40;
-	
+
 	// Grid
 	const Grid = new THREE.GridHelper(4000, 50, "#A3BAC3", "#A3BAC3");
 	scene.add(Grid);
@@ -205,11 +217,24 @@ function init() {
 		hemiLight.groundColor.setHSL(0.095, 1, 0.75);
 		hemiLight.position.set(0, 50, 0);
 	}
+
+	// Post processing
+	{
+		composer = new EffectComposer(renderer);
+		composer.addPass(new RenderPass(scene, currentCamera));
+
+		afterimagePass = new AfterimagePass();
+		afterimagePass.uniforms["damp"].value = 0.96;
+		composer.addPass(afterimagePass);
+	}
 }
 
 function render() {
 	renderer.clear();
-	renderer.render(scene, currentCamera);
+	if (isPostProcessing)
+		composer.render()
+	else
+		renderer.render(scene, currentCamera);
 }
 
 function addMesh(meshID) {
@@ -470,14 +495,15 @@ function animation(id) {
 			animation1();
 			break;
 		case 2:
+			isPostProcessing = true;
+
 			animation2();
 			break;
 		case 3:
 			scene.background = color_BFDBF7;
 			scene.fog = fog_BFDBF7;
 			scene.add(hemiLight);
-			// const hemiLightHelper = new THREE.HemisphereLightHelper(hemiLight, 10);
-			// scene.add(hemiLightHelper);
+
 			const box = new THREE.Box3().setFromObject(type == 1 ? point : mesh);
 			animalLoader.load('models/gltf/Flamingo.glb', function (gltf) {
 				const animalmesh = gltf.scene.children[0];
@@ -542,6 +568,7 @@ function animation(id) {
 					addAnimal(animalmesh, clip, speed, factor, 1, x, FLOOR, z, s, 1, 4);
 				}
 			});
+
 			animation3();
 			break;
 		default:
@@ -556,6 +583,7 @@ function animation(id) {
 
 			animationID3 = [];
 			pivots = [];
+			isPostProcessing = false;
 			mixer = new THREE.AnimationMixer(scene);
 
 			break;
@@ -576,7 +604,7 @@ function addAnimal(mesh2, clip, speed, factor, duration, x, y, z, scale, fudgeCo
 
 	mixer.clipAction(clip, mesh2).setDuration(duration).startAt(-duration * Math.random()).play();
 	let length = mixer._actions.length;
-	mixer._actions[length-1].timeScale = speed;
+	mixer._actions[length - 1].timeScale = speed;
 	mesh2.position.set(x, y, z);
 	mesh2.rotation.set(0, x > 0 ? Math.PI : 0, 0);
 	mesh2.scale.set(scale, scale, scale);
@@ -586,8 +614,11 @@ function addAnimal(mesh2, clip, speed, factor, duration, x, y, z, scale, fudgeCo
 
 	pivot = new THREE.Group();
 
-	if (typeAnimal != 4) pivot.position.copy(root);
-	else pivot.position.set(root.x, 0, root.z);
+	if (typeAnimal != 4)
+		pivot.position.copy(root);
+	else
+		pivot.position.set(root.x, 0, root.z);
+
 	pivot.rotation_check = 0;
 	scene.add(pivot);
 	pivot.add(mesh2);
@@ -643,7 +674,7 @@ var clock = new THREE.Clock();
 function animation3() {
 	let delta = clock.getDelta();
 	mixer.update(delta);
-	
+
 	mesh.rotation.x += delta;
 	mesh.rotation.y += delta;
 	point.rotation.copy(mesh.rotation);

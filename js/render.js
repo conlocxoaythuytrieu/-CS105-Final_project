@@ -89,8 +89,10 @@ class MinMaxGUIHelper {
 	}
 }
 
-var color_343A40 = new THREE.Color("#343A40"), color_BFDBF7 = new THREE.Color("#BFDBF7");
-var fog_343A40 = new THREE.Fog("#343A40", 0.5), fog_BFDBF7 = new THREE.Fog("#BFDBF7", 0.5);
+var color_343A40 = new THREE.Color("#343A40"),
+	color_BFDBF7 = new THREE.Color("#BFDBF7");
+var fog_343A40 = new THREE.Fog("#343A40", 0.5),
+	fog_BFDBF7 = new THREE.Fog("#BFDBF7", 0.5);
 init();
 render();
 
@@ -98,7 +100,7 @@ function init() {
 	// Scene
 	scene = new THREE.Scene();
 	scene.background = color_343A40;
-	
+
 	// Grid
 	const Grid = new THREE.GridHelper(4000, 50, "#A3BAC3", "#A3BAC3");
 	scene.add(Grid);
@@ -576,7 +578,7 @@ function addAnimal(mesh2, clip, speed, factor, duration, x, y, z, scale, fudgeCo
 
 	mixer.clipAction(clip, mesh2).setDuration(duration).startAt(-duration * Math.random()).play();
 	let length = mixer._actions.length;
-	mixer._actions[length-1].timeScale = speed;
+	mixer._actions[length - 1].timeScale = speed;
 	mesh2.position.set(x, y, z);
 	mesh2.rotation.set(0, x > 0 ? Math.PI : 0, 0);
 	mesh2.scale.set(scale, scale, scale);
@@ -643,7 +645,7 @@ var clock = new THREE.Clock();
 function animation3() {
 	let delta = clock.getDelta();
 	mixer.update(delta);
-	
+
 	mesh.rotation.x += delta;
 	mesh.rotation.y += delta;
 	point.rotation.copy(mesh.rotation);

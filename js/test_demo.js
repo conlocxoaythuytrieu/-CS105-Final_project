@@ -89,8 +89,10 @@ class MinMaxGUIHelper {
 	}
 }
 
-var color_343A40 = new THREE.Color("#343A40"), color_BFDBF7 = new THREE.Color("#BFDBF7");
-var fog_343A40 = new THREE.Fog("#343A40", 0.5), fog_BFDBF7 = new THREE.Fog("#BFDBF7", 0.5);
+var color_343A40 = new THREE.Color("#343A40"),
+	color_BFDBF7 = new THREE.Color("#BFDBF7");
+var fog_343A40 = new THREE.Fog("#343A40", 0.5),
+	fog_BFDBF7 = new THREE.Fog("#BFDBF7", 0.5);
 init();
 render();
 
@@ -98,7 +100,7 @@ function init() {
 	// Scene
 	scene = new THREE.Scene();
 	scene.background = color_343A40;
-	console.log(color_343A40);
+
 	// Grid
 	const Grid = new THREE.GridHelper(4000, 50, "#A3BAC3", "#A3BAC3");
 	scene.add(Grid);
@@ -115,7 +117,7 @@ function init() {
 		gui = new GUI({
 			autoPlace: false
 		});
-		var customContainer = document.getElementById("my-gui-container");
+		let customContainer = document.getElementById("my-gui-container");
 		customContainer.appendChild(gui.domElement);
 	}
 
@@ -210,8 +212,6 @@ function init() {
 function render() {
 	renderer.clear();
 	renderer.render(scene, currentCamera);
-	// console.log("scene.children", scene.children);
-
 }
 
 function addMesh(meshID) {
@@ -426,11 +426,11 @@ function onDocumentMouseDown(event) {
 
 	// find intersections
 	raycaster.setFromCamera(mouse, currentCamera);
-	var intersects = raycaster.intersectObjects(scene.children);
+	let intersects = raycaster.intersectObjects(scene.children);
 	let check_obj = 0;
 
 	if (intersects.length > 0) {
-		var obj;
+		let obj;
 		for (obj in intersects) {
 			if (intersects[obj].object.geometry.type == "PlaneGeometry") continue;
 
@@ -454,8 +454,7 @@ function onDocumentMouseDown(event) {
 }
 
 var root, pivot;
-var flamingo = null,
-	pivots = [],
+var pivots = [],
 	FLOOR = 0,
 	mixer = new THREE.AnimationMixer(scene);
 var animalLoader = new GLTFLoader();
@@ -494,7 +493,7 @@ function animation(id) {
 					const x = ((70 + (box.max.x - box.min.x) / 2) + Math.random() * 100) * (Math.round(Math.random()) ? -1 : 1);
 					const y = 80 + Math.random() * 50;
 					const z = -5 + Math.random() * 10;
-					addAnimal(animalmesh, clip, speed, factor, 1, x, FLOOR + y, z, s, 0, 0);
+					addAnimal(animalmesh, clip, speed, factor, 1, x, FLOOR + y, z, s, 0, 1);
 				}
 			});
 
@@ -510,7 +509,7 @@ function animation(id) {
 					const x = ((70 + (box.max.x - box.min.x) / 2) + Math.random() * 100) * (Math.round(Math.random()) ? -1 : 1);
 					const y = 80 + Math.random() * 50;
 					const z = -5 + Math.random() * 10;
-					addAnimal(animalmesh, clip, speed, factor, 1, x, FLOOR + y, z, s, 0, 0);
+					addAnimal(animalmesh, clip, speed, factor, 1, x, FLOOR + y, z, s, 0, 2);
 				}
 			});
 
@@ -526,7 +525,7 @@ function animation(id) {
 					const x = ((70 + (box.max.x - box.min.x) / 2) + Math.random() * 100) * (Math.round(Math.random()) ? -1 : 1);
 					const y = 80 + Math.random() * 50;
 					const z = -5 + Math.random() * 10;
-					addAnimal(animalmesh, clip, speed, factor, 1, x, FLOOR + y, z, s, 0, 0);
+					addAnimal(animalmesh, clip, speed, factor, 1, x, FLOOR + y, z, s, 0, 3);
 				}
 			});
 
@@ -542,7 +541,7 @@ function animation(id) {
 					const x = ((90 + (box.max.x - box.min.x) / 2) + Math.random() * 100) * (Math.round(Math.random()) ? -1 : 1);
 					// const y = 60 + Math.random() * 50;
 					const z = -5 + Math.random() * 10;
-					addAnimal(animalmesh, clip, speed, factor, 1, x, FLOOR, z, s, 1, 1);
+					addAnimal(animalmesh, clip, speed, factor, 1, x, FLOOR, z, s, 1, 4);
 				}
 			});
 			animation3();
@@ -558,6 +557,9 @@ function animation(id) {
 				scene.remove(pivots[i]);
 
 			animationID3 = [];
+			pivots = [];
+			mixer = new THREE.AnimationMixer(scene);
+
 			break;
 	}
 
@@ -572,11 +574,11 @@ function addAnimal(mesh2, clip, speed, factor, duration, x, y, z, scale, fudgeCo
 	if (fudgeColor)
 		mesh2.material.color.offsetHSL(0, Math.random() * 0.5 - 0.25, Math.random() * 0.5 - 0.25);
 
-	mesh2.speed = speed;
 	mesh2.factor = factor;
 
 	mixer.clipAction(clip, mesh2).setDuration(duration).startAt(-duration * Math.random()).play();
-
+	let length = mixer._actions.length;
+	mixer._actions[length - 1].timeScale = speed;
 	mesh2.position.set(x, y, z);
 	mesh2.rotation.set(0, x > 0 ? Math.PI : 0, 0);
 	mesh2.scale.set(scale, scale, scale);
@@ -586,7 +588,8 @@ function addAnimal(mesh2, clip, speed, factor, duration, x, y, z, scale, fudgeCo
 
 	pivot = new THREE.Group();
 
-	if (typeAnimal == 0) pivot.position.copy(root);
+	if (typeAnimal != 4) pivot.position.copy(root);
+	else pivot.position.set(root.x, 0, root.z);
 	pivot.rotation_check = 0;
 	scene.add(pivot);
 	pivot.add(mesh2);
@@ -606,14 +609,14 @@ function animation1() {
 	point.rotation.copy(mesh.rotation);
 	point.position.copy(mesh.position);
 
-	let tam = Math.abs(Math.floor(mesh.position.y - root.y));
-	if (tam % 10 == 0) {
-		if (tam / 10 == 3)
+	let distance = Math.abs(Math.floor(mesh.position.y - root.y));
+	if (distance % 10 == 0) {
+		if (distance / 10 == 3)
 			ani1_step *= -1;
-		if (tam / 10 == 0)
+		if (distance / 10 == 0)
 			setMaterial(3);
-		if (tam / 10 == 1 || tam / 10 == 2)
-			setMaterial(2 / (tam / 10));
+		if (distance / 10 == 1 || distance / 10 == 2)
+			setMaterial(2 / (distance / 10));
 	}
 
 	render();
@@ -640,21 +643,21 @@ function animation2() {
 var clock = new THREE.Clock();
 
 function animation3() {
-	var delta = clock.getDelta();
+	let delta = clock.getDelta();
 	mixer.update(delta);
 
 	mesh.rotation.x += delta;
 	mesh.rotation.y += delta;
 	point.rotation.copy(mesh.rotation);
 
-	for (var i = 0; i < pivots.length; i++) {
-		const f = pivots[i].children[0].factor;
+	for (let i = 0; i < pivots.length; i++) {
+		let f = pivots[i].children[0].factor;
 		pivots[i].rotation.y += Math.sin((delta * f) / 2) * Math.cos((delta * f) / 2) * 2.5;
 	}
 
 	render();
-	let tam = requestAnimationFrame(animation3);
-	animationID3.push(tam);
+
+	animationID3.push(requestAnimationFrame(animation3));
 }
 
 function updateCamera() {
