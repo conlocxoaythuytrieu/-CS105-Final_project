@@ -110,7 +110,7 @@ class MinMaxGUIHelper {
 var color_343A40 = new THREE.Color("#343A40"),
 	color_BFDBF7 = new THREE.Color("#BFDBF7", );
 var fog_343A40 = new THREE.Fog("#343A40", 0.5, 3000),
-	fog_BFDBF7 = new THREE.Fog("#634A44", 0.5, 3000);
+	fog_634A44 = new THREE.Fog("#634A44", 0.5, 3000);
 
 init();
 render();
@@ -210,7 +210,6 @@ function init() {
 
 	{
 		meshPlane = new THREE.Mesh(planeGeo, planeMat);
-		meshPlane.material.color.setHSL(0.095, 1, 0.75);
 		meshPlane.receiveShadow = true;
 		meshPlane.rotation.x = Math.PI * -.5;
 	}
@@ -218,7 +217,6 @@ function init() {
 	// Init main light source
 	{
 		pointLight = new THREE.PointLight("#F5F5F5", 3, Infinity);
-		pointLight.color.setHSL(0.1, 1, 0.95);
 		pointLight.castShadow = true;
 		pointLightHelper = new THREE.PointLightHelper(pointLight, 5);
 	}
@@ -270,7 +268,7 @@ function init() {
 	{
 		sky = new Sky();
 		sky.scale.setScalar(planeSize);
-		sky.name="Sky";
+		sky.name = "Sky";
 		var uniforms = sky.material.uniforms;
 		uniforms['turbidity'].value = 10;
 		uniforms['rayleigh'].value = 2;
@@ -419,7 +417,6 @@ function setPointLight() {
 	if (!LightSwitch) {
 		LightSwitch = true;
 		pointLight.color.set("#F5F5F5");
-		pointLight.color.setHSL(0.1, 1, 0.95);
 		pointLight.position.set(0, 70, 70);
 
 		scene.add(meshPlane);
@@ -505,7 +502,7 @@ function onDocumentMouseDown(event) {
 		let obj;
 		for (obj in intersects) {
 			if (intersects[obj].object.geometry.type == "PlaneGeometry") continue;
-			if(intersects[obj].object.name == "Sky") continue;
+			if (intersects[obj].object.name == "Sky") continue;
 			if (intersects[obj].object.type == "Mesh" || intersects[obj].object.type == "Points") {
 				check_obj = 1;
 				setControlTransform(intersects[obj].object);
@@ -557,7 +554,7 @@ function animation(id) {
 			break;
 		case 3:
 			// scene.background = color_BFDBF7;
-			scene.fog = fog_BFDBF7;
+			scene.fog = fog_634A44;
 			scene.remove(Grid);
 			scene.add(hemiLight);
 			scene.add(water);
