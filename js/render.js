@@ -30,8 +30,8 @@ import {
 	Sky
 } from '../js/Sky.js';
 
-var cameraPersp, cameraOrtho, currentCamera;
-var scene, renderer, control, orbit, gui, texture, raycaster;
+var cameraPersp, currentCamera;
+var scene, renderer, control, orbit, gui, texture, raycaster, Grid;
 var meshPlane, pointLight, pointLightHelper, hemiLight, pointLightColorGUI, ObjColorGUI;
 var textureLoader = new THREE.TextureLoader(),
 	mouse = new THREE.Vector2();
@@ -110,7 +110,7 @@ class MinMaxGUIHelper {
 var color_343A40 = new THREE.Color("#343A40"),
 	color_BFDBF7 = new THREE.Color("#BFDBF7", );
 var fog_343A40 = new THREE.Fog("#343A40", 0.5, 3000),
-	fog_BFDBF7 = new THREE.Fog(color_BFDBF7, 0.5, 3000);
+	fog_BFDBF7 = new THREE.Fog("#634A44", 0.5, 3000);
 
 init();
 render();
@@ -122,7 +122,7 @@ function init() {
 
 	// Grid
 	const planeSize = 5000;
-	const Grid = new THREE.GridHelper(planeSize, 50, "#A3BAC3", "#A3BAC3");
+	Grid = new THREE.GridHelper(planeSize, 50, "#A3BAC3", "#A3BAC3");
 	scene.add(Grid);
 
 	// Coordinate axes
@@ -270,7 +270,7 @@ function init() {
 	{
 		sky = new Sky();
 		sky.scale.setScalar(planeSize);
-
+		sky.name="Sky";
 		var uniforms = sky.material.uniforms;
 		uniforms['turbidity'].value = 10;
 		uniforms['rayleigh'].value = 2;
@@ -505,7 +505,7 @@ function onDocumentMouseDown(event) {
 		let obj;
 		for (obj in intersects) {
 			if (intersects[obj].object.geometry.type == "PlaneGeometry") continue;
-
+			if(intersects[obj].object.name == "Sky") continue;
 			if (intersects[obj].object.type == "Mesh" || intersects[obj].object.type == "Points") {
 				check_obj = 1;
 				setControlTransform(intersects[obj].object);
@@ -534,7 +534,8 @@ var animationID3 = [],
 
 function animation(id) {
 	isPostProcessing = false;
-
+	console.log(scene.children);
+	scene.add(Grid);
 	if (type_animation == 3 && id != 3)
 		removeAnimation3();
 	type_animation = id;
@@ -555,10 +556,12 @@ function animation(id) {
 			animation2();
 			break;
 		case 3:
-			scene.background = color_BFDBF7;
+			// scene.background = color_BFDBF7;
 			scene.fog = fog_BFDBF7;
+			scene.remove(Grid);
 			scene.add(hemiLight);
 			scene.add(water);
+			console.log(sky);
 			scene.add(sky);
 			updateSun();
 
@@ -639,6 +642,8 @@ function removeAnimation3() {
 	scene.remove(hemiLight);
 	scene.background = color_343A40;
 	scene.fog = fog_343A40;
+	scene.remove(sky);
+	scene.remove(water);
 
 	for (let i = 0; i < animationID3.length; ++i)
 		cancelAnimationFrame(animationID3[i]);
