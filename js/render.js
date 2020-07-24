@@ -14,17 +14,27 @@ import {
 import {
 	GLTFLoader
 } from '../js/GLTFLoader.js';
+import {
+	EffectComposer
+} from '../js/EffectComposer.js';
+import {
+	RenderPass
+} from '../js/RenderPass.js';
+import {
+	AfterimagePass
+} from '../js/AfterimagePass.js';
 
 
-var cameraPersp, currentCamera;
-var scene, renderer, control, orbit, gui, texture, meshPlane, raycaster, pointLight, pointLightHelper, hemiLight;
+var cameraPersp, cameraOrtho, currentCamera;
+var scene, renderer, control, orbit, gui, texture, raycaster;
+var meshPlane, pointLight, pointLightHelper, hemiLight, pointLightColorGUI, ObjColorGUI;
 var textureLoader = new THREE.TextureLoader(),
 	mouse = new THREE.Vector2();
 var LightSwitch = false,
 	type = null,
 	pre_material = null;
 var animationID;
-var pointLightColorGUI, ObjColorGUI;
+var composer, afterimagePass, isPostProcessing = false;
 
 var BoxGeometry = new THREE.BoxGeometry(50, 50, 50, 20, 20, 20);
 var SphereGeometry = new THREE.SphereGeometry(30, 50, 50);
@@ -207,11 +217,24 @@ function init() {
 		hemiLight.groundColor.setHSL(0.095, 1, 0.75);
 		hemiLight.position.set(0, 50, 0);
 	}
+
+	// Post processing
+	{
+		composer = new EffectComposer(renderer);
+		composer.addPass(new RenderPass(scene, currentCamera));
+
+		afterimagePass = new AfterimagePass();
+		afterimagePass.uniforms["damp"].value = 0.96;
+		composer.addPass(afterimagePass);
+	}
 }
 
 function render() {
 	renderer.clear();
-	renderer.render(scene, currentCamera);
+	if (isPostProcessing)
+		composer.render()
+	else
+		renderer.render(scene, currentCamera);
 }
 
 function addMesh(meshID) {
@@ -300,6 +323,7 @@ function setMaterial(materialID) {
 		default:
 			break;
 	}
+
 	mesh.castShadow = true;
 
 	if (materialID != 4) {
@@ -455,11 +479,14 @@ var root;
 var pivots = [],
 	mixer = new THREE.AnimationMixer(scene);
 var animalLoader = new GLTFLoader();
-var animationID3 = [], type_animation = 0;
+var animationID3 = [],
+	type_animation = 0;
+
 function animation(id) {
+	isPostProcessing = false;
+
 	if (type_animation == 3 && id != 3)
 		removeAnimation3();
-
 	type_animation = id;
 
 	if (type == null)
@@ -473,6 +500,8 @@ function animation(id) {
 			animation1();
 			break;
 		case 2:
+			isPostProcessing = true;
+
 			animation2();
 			break;
 		case 3:
@@ -539,21 +568,25 @@ function animation(id) {
 
 				for (let i = 0; i < 5; i++) {
 					const x = ((90 + (box.max.x - box.min.x) / 2) + Math.random() * 100) * (Math.round(Math.random()) ? -1 : 1);
+					// const y = 60 + Math.random() * 50;
 					const z = -5 + Math.random() * 10;
 					addAnimal(animalmesh, clip, speed, factor, 1, x, 0, z, s, 1, 4);
 				}
 			});
+
 			animation3();
 			break;
 	}
 
 	render();
 }
+window.animation = animation;
 
 function removeAnimation3() {
 	scene.remove(hemiLight);
 	scene.background = color_343A40;
 	scene.fog = fog_343A40;
+
 	for (let i = 0; i < animationID3.length; ++i)
 		cancelAnimationFrame(animationID3[i]);
 
@@ -564,8 +597,6 @@ function removeAnimation3() {
 	pivots = [];
 	mixer = new THREE.AnimationMixer(scene);
 }
-
-window.animation = animation;
 
 function addAnimal(mesh2, clip, speed, factor, duration, x, y, z, scale, fudgeColor, typeAnimal) {
 	mesh2 = mesh2.clone();
@@ -588,8 +619,11 @@ function addAnimal(mesh2, clip, speed, factor, duration, x, y, z, scale, fudgeCo
 
 	let pivot = new THREE.Group();
 
-	if (typeAnimal != 4) pivot.position.copy(root);
-	else pivot.position.set(root.x, 0, root.z);
+	if (typeAnimal != 4)
+		pivot.position.copy(root);
+	else
+		pivot.position.set(root.x, 0, root.z);
+
 	pivot.rotation_check = 0;
 	scene.add(pivot);
 	pivot.add(mesh2);
@@ -610,6 +644,7 @@ function animation1() {
 	point.position.copy(mesh.position);
 
 	let distance = Math.abs(Math.floor(mesh.position.y - root.y));
+
 	if (distance % 10 == 0) {
 		if (distance / 10 == 3)
 			ani1_step *= -1;
