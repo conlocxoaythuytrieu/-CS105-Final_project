@@ -276,7 +276,6 @@ function setMaterial(materialID) {
 			break;
 		case 2:
 			mesh.material = BasicMaterial;
-			mesh.castShadow = false;
 			mesh.material.wireframe = true;
 			break;
 		case 3:
@@ -284,7 +283,6 @@ function setMaterial(materialID) {
 				mesh.material = BasicMaterial;
 			else
 				mesh.material = PhongMaterial;
-			mesh.castShadow = true;
 			mesh.material.wireframe = false;
 			break;
 		case 4:
@@ -292,7 +290,6 @@ function setMaterial(materialID) {
 				mesh.material = BasicMaterial;
 			else
 				mesh.material = PhongMaterial;
-			mesh.castShadow = true;
 			mesh.material.wireframe = false;
 			mesh.material.map = texture;
 			mesh.material.map.needsUpdate = true;
@@ -301,7 +298,8 @@ function setMaterial(materialID) {
 		default:
 			break;
 	}
-
+	mesh.castShadow = true;
+	
 	if (materialID != 4) {
 		mesh.material.map = null;
 		mesh.material.needsUpdate = true;
