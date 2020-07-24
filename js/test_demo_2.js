@@ -89,14 +89,16 @@ class MinMaxGUIHelper {
 	}
 }
 
+var color_343A40 = new THREE.Color("#343A40"), color_BFDBF7 = new THREE.Color("#BFDBF7");
+var fog_343A40 = new THREE.Fog("#343A40", 0.5), fog_BFDBF7 = new THREE.Fog("#BFDBF7", 0.5);
 init();
 render();
 
 function init() {
 	// Scene
 	scene = new THREE.Scene();
-	scene.background = new THREE.Color("#343A40");
-
+	scene.background = color_343A40;
+	console.log(color_343A40);
 	// Grid
 	const Grid = new THREE.GridHelper(4000, 50, "#A3BAC3", "#A3BAC3");
 	scene.add(Grid);
@@ -106,7 +108,7 @@ function init() {
 	// scene.add(Axes);
 
 	// Fog
-	scene.fog = new THREE.Fog("#F5F5F5", 0.5);
+	scene.fog = fog_343A40;
 
 	// GUI control
 	{
@@ -474,8 +476,8 @@ function animation(id) {
 			animation2();
 			break;
 		case 3:
-			scene.background = new THREE.Color("#BFDBF7");
-			// scene.background = new THREE.Color('skyblue');
+			scene.background = color_BFDBF7;
+			scene.fog = fog_BFDBF7;
 			scene.add(hemiLight);
 			// const hemiLightHelper = new THREE.HemisphereLightHelper(hemiLight, 10);
 			// scene.add(hemiLightHelper);
@@ -533,7 +535,7 @@ function animation(id) {
 				const clip = gltf.animations[0];
 
 				const s = 0.35;
-				const speed = 2;
+				const speed = 2.5;
 				const factor = 1.25 + Math.random();
 
 				for (let i = 0; i < 5; i++) {
@@ -547,7 +549,8 @@ function animation(id) {
 			break;
 		default:
 			scene.remove(hemiLight);
-
+			scene.background = color_343A40;
+			scene.fog = fog_343A40;
 			for (let i = 0; i < animationID3.length; ++i)
 				cancelAnimationFrame(animationID3[i]);
 
@@ -645,7 +648,7 @@ function animation3() {
 	point.rotation.copy(mesh.rotation);
 
 	for (var i = 0; i < pivots.length; i++) {
-		const f = pivot.children[0].factor;
+		const f = pivots[i].children[0].factor;
 		pivots[i].rotation.y += Math.sin((delta * f) / 2) * Math.cos((delta * f) / 2) * 2.5;
 	}
 
