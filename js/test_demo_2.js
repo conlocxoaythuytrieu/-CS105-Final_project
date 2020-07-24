@@ -135,7 +135,7 @@ function init() {
 		folderCam.add(currentCamera, "fov", 1, 180).name("FOV").onChange(updateCamera);
 		const minMaxGUIHelper = new MinMaxGUIHelper(currentCamera, "near", "far");
 		folderCam.add(minMaxGUIHelper, "min", 0.1, 100, 0.1).name("Near").onChange(updateCamera);
-		folderCam.add(minMaxGUIHelper, "max", 200, 10000, 10).name("Far").onChange(updateCamera);
+		folderCam.add(minMaxGUIHelper, "max", 200, 5000, 10).name("Far").onChange(updateCamera);
 	}
 
 	ObjColorGUI = gui.addColor(new ColorGUIHelper(mesh.material, "color"), "value").name("Obj Color");
