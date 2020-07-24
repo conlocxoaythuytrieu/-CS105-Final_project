@@ -89,8 +89,10 @@ class MinMaxGUIHelper {
 	}
 }
 
-var color_343A40 = new THREE.Color("#343A40"), color_BFDBF7 = new THREE.Color("#BFDBF7");
-var fog_343A40 = new THREE.Fog("#343A40", 0.5), fog_BFDBF7 = new THREE.Fog("#BFDBF7", 0.5);
+var color_343A40 = new THREE.Color("#343A40"),
+	color_BFDBF7 = new THREE.Color("#BFDBF7");
+var fog_343A40 = new THREE.Fog("#343A40", 0.5),
+	fog_BFDBF7 = new THREE.Fog("#BFDBF7", 0.5);
 init();
 render();
 
