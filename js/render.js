@@ -50,7 +50,8 @@ var IcosahedronGeometry = new THREE.IcosahedronGeometry(30);
 
 var BasicMaterial = new THREE.MeshBasicMaterial({
 	color: "#F5F5F5",
-	side: THREE.DoubleSide
+	side: THREE.DoubleSide,
+	transparent: true
 });
 var PointMaterial = new THREE.PointsMaterial({
 	color: "#F5F5F5",
@@ -59,7 +60,8 @@ var PointMaterial = new THREE.PointsMaterial({
 });
 var PhongMaterial = new THREE.MeshPhongMaterial({
 	color: "#F5F5F5",
-	side: THREE.DoubleSide
+	side: THREE.DoubleSide,
+	transparent: true
 });
 
 var mesh = new THREE.Mesh();
