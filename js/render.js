@@ -11,17 +11,20 @@ import {
 import {
 	GUI
 } from "../js/dat.gui.module.js";
+import {
+	GLTFLoader
+} from '../js/GLTFLoader.js';
 
 
 var cameraPersp, cameraOrtho, currentCamera;
-var scene, renderer, control, orbit, gui, texture, light, PointLightHelper, meshplane, raycaster;
-var loader = new THREE.TextureLoader(),
+var scene, renderer, control, orbit, gui, texture, meshPlane, raycaster, pointLight, pointLightHelper, hemiLight;
+var textureLoader = new THREE.TextureLoader(),
 	mouse = new THREE.Vector2();
 var LightSwitch = false,
 	type = null,
 	pre_material = null;
-var id_animation;
-var LightColorGUI, ObjColorGUI;
+var animationID;
+var pointLightColorGUI, ObjColorGUI;
 
 var BoxGeometry = new THREE.BoxGeometry(50, 50, 50, 20, 20, 20);
 var SphereGeometry = new THREE.SphereGeometry(30, 50, 50);
@@ -86,29 +89,33 @@ class MinMaxGUIHelper {
 	}
 }
 
+var color_343A40 = new THREE.Color("#343A40"), color_BFDBF7 = new THREE.Color("#BFDBF7");
+var fog_343A40 = new THREE.Fog("#343A40", 0.5), fog_BFDBF7 = new THREE.Fog("#BFDBF7", 0.5);
 init();
 render();
 
 function init() {
 	// Scene
 	scene = new THREE.Scene();
-	scene.background = new THREE.Color("#343A40");
-
+	scene.background = color_343A40;
+	
 	// Grid
-	const grid = new THREE.GridHelper(400, 50, "#A3BAC3", "#A3BAC3");
-	scene.add(grid);
+	const Grid = new THREE.GridHelper(4000, 50, "#A3BAC3", "#A3BAC3");
+	scene.add(Grid);
 
 	// Coordinate axes
-	scene.add(new THREE.AxesHelper(30));
+	// const Axes = new THREE.AxesHelper(30);
+	// scene.add(Axes);
 
 	// Fog
-	scene.fog = new THREE.Fog(0x23272a, 0.5, 1700, 4000);
+	scene.fog = fog_343A40;
 
+	// GUI control
 	{
 		gui = new GUI({
 			autoPlace: false
 		});
-		var customContainer = document.getElementById("my-gui-container");
+		let customContainer = document.getElementById("my-gui-container");
 		customContainer.appendChild(gui.domElement);
 	}
 
@@ -128,7 +135,7 @@ function init() {
 		folderCam.add(currentCamera, "fov", 1, 180).name("FOV").onChange(updateCamera);
 		const minMaxGUIHelper = new MinMaxGUIHelper(currentCamera, "near", "far");
 		folderCam.add(minMaxGUIHelper, "min", 0.1, 100, 0.1).name("Near").onChange(updateCamera);
-		folderCam.add(minMaxGUIHelper, "max", 200, 10000, 10).name("Far").onChange(updateCamera);
+		folderCam.add(minMaxGUIHelper, "max", 200, 5000, 10).name("Far").onChange(updateCamera);
 	}
 
 	ObjColorGUI = gui.addColor(new ColorGUIHelper(mesh.material, "color"), "value").name("Obj Color");
@@ -170,34 +177,43 @@ function init() {
 		orbit.enabled = !event.value;
 	});
 
-	// init plane for casting shadow
+	// Init plane for casting shadow
 	{
-		const planeSize = 400;
+		const planeSize = 4000;
 		const planeGeo = new THREE.PlaneGeometry(planeSize, planeSize);
 		const planeMat = new THREE.MeshPhongMaterial({
 			side: THREE.DoubleSide,
 		});
-		meshplane = new THREE.Mesh(planeGeo, planeMat);
-		meshplane.receiveShadow = true;
-		meshplane.rotation.x = Math.PI * -.5;
+		meshPlane = new THREE.Mesh(planeGeo, planeMat);
+		meshPlane.material.color.setHSL(0.095, 1, 0.75);
+		meshPlane.receiveShadow = true;
+		meshPlane.rotation.x = Math.PI * -.5;
 	}
 
+	// Init main light source
 	{
-		const color = "#F5F5F5";
-		const intensity = 2;
-		light = new THREE.PointLight(color, intensity);
-		light.castShadow = true;
-		PointLightHelper = new THREE.PointLightHelper(light, 5);
+		pointLight = new THREE.PointLight("#F5F5F5", 3, Infinity);
+		pointLight.color.setHSL(0.1, 1, 0.95);
+		pointLight.castShadow = true;
+		pointLightHelper = new THREE.PointLightHelper(pointLight, 5);
+	}
+
+	// Init light source for animation 3
+	{
+		hemiLight = new THREE.HemisphereLight(0xffffff, 0xffffff, 1);
+		hemiLight.color.setHSL(0.6, 1, 0.6);
+		hemiLight.groundColor.setHSL(0.095, 1, 0.75);
+		hemiLight.position.set(0, 50, 0);
 	}
 }
 
 function render() {
+	renderer.clear();
 	renderer.render(scene, currentCamera);
-	// console.log("scene.children", scene.children);
 }
 
-function addMesh(mesh_id) {
-	switch (mesh_id) {
+function addMesh(meshID) {
+	switch (meshID) {
 		case 1:
 			mesh.geometry = BoxGeometry;
 			break;
@@ -235,27 +251,26 @@ function addMesh(mesh_id) {
 			break;
 	}
 
-
 	point.geometry = mesh.geometry;
 	setMaterial(3)
 
-	mesh.position.set(0,0,0);
-	mesh.rotation.set(0,0,0);
-	mesh.scale.set(1,1,1);
+	mesh.position.set(0, 0, 0);
+	mesh.rotation.set(0, 0, 0);
+	mesh.scale.set(1, 1, 1);
 
 	render();
 }
 window.addMesh = addMesh;
 
-function setMaterial(material_id) {
-	type = material_id;
+function setMaterial(materialID) {
+	type = materialID;
 	pre_material != 1 ? scene.remove(mesh) : scene.remove(point);
 	gui.remove(ObjColorGUI);
 
 	if (control.object && (control.object.type == "Mesh" || control.object.type == "Points"))
-			control.detach();
+		control.detach();
 
-	switch (material_id) {
+	switch (materialID) {
 		case 1:
 			point.material = PointMaterial;
 			break;
@@ -287,24 +302,24 @@ function setMaterial(material_id) {
 			break;
 	}
 
-	if (material_id != 4) {
+	if (materialID != 4) {
 		mesh.material.map = null;
 		mesh.material.needsUpdate = true;
 	}
 
-	if (pre_material != 1 && material_id == 1) {
+	if (pre_material != 1 && materialID == 1) {
 		point.position.copy(mesh.position);
 		point.rotation.copy(mesh.rotation);
 		point.scale.copy(mesh.scale);
 	}
 
-	if (pre_material == 1 && material_id != 1) {
+	if (pre_material == 1 && materialID != 1) {
 		mesh.position.copy(point.position);
 		mesh.rotation.copy(point.rotation);
 		mesh.scale.copy(point.scale);
 	}
 
-	if (material_id != 1) {
+	if (materialID != 1) {
 		mesh.material.color.set("#F5F5F5");
 		ObjColorGUI = gui.addColor(new ColorGUIHelper(mesh.material, "color"), "value").name("Obj Color");
 		scene.add(mesh);
@@ -314,43 +329,45 @@ function setMaterial(material_id) {
 		scene.add(point);
 	}
 
-	pre_material = material_id;
+	pre_material = materialID;
 	render();
 }
 window.setMaterial = setMaterial;
 
 function setTexture(url) {
-	texture = loader.load(url, render);
+	texture = textureLoader.load(url, render);
 	texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
 	setMaterial(4);
 }
 window.setTexture = setTexture;
 
-function SetPointLight() {
+function setPointLight() {
 	if (!LightSwitch) {
 		LightSwitch = true;
-		light.position.set(0, 70, 70);
+		pointLight.color.set("#F5F5F5");
+		pointLight.color.setHSL(0.1, 1, 0.95);
+		pointLight.position.set(0, 70, 70);
 
-		scene.add(meshplane);
-		scene.add(light);
-		scene.add(PointLightHelper);
+		scene.add(meshPlane);
+		scene.add(pointLight);
+		scene.add(pointLightHelper);
 
 		if (type == 3 || type == 4)
 			setMaterial(type);
 
-		LightColorGUI = gui.addColor(new ColorGUIHelper(light, "color"), "value").name("Light Color");
+		pointLightColorGUI = gui.addColor(new ColorGUIHelper(pointLight, "color"), "value").name("Light Color");
 		render();
 	}
 }
-window.SetPointLight = SetPointLight;
+window.setPointLight = setPointLight;
 
-function RemovePointLight() {
+function removePointLight() {
 	if (LightSwitch) {
 		LightSwitch = false;
 
-		scene.remove(light);
-		scene.remove(PointLightHelper);
-		scene.remove(meshplane);
+		scene.remove(pointLight);
+		scene.remove(pointLightHelper);
+		scene.remove(meshPlane);
 
 		if (control.object && control.object.type == "PointLight")
 			control.detach();
@@ -358,45 +375,45 @@ function RemovePointLight() {
 		if (type == 3 || type == 4)
 			setMaterial(type);
 
-		gui.remove(LightColorGUI);
+		gui.remove(pointLightColorGUI);
 		render();
 	}
 }
-window.RemovePointLight = RemovePointLight;
+window.removePointLight = removePointLight;
 
-function control_transform(mesh) {
+function setControlTransform(mesh) {
 	control.attach(mesh);
 	scene.add(control);
 
 	window.addEventListener("keydown", function (event) {
 		switch (event.keyCode) {
 			case 84: // T
-				EventTranslate();
+				eventTranslate();
 				break;
 			case 82: // R
-				EventRotate();
+				eventRotate();
 				break;
 			case 83: // S
-				EventScale();
+				eventScale();
 				break;
 		}
 	});
 }
 
-function EventTranslate() {
+function eventTranslate() {
 	control.setMode("translate");
 }
-window.EventTranslate = EventTranslate;
+window.eventTranslate = eventTranslate;
 
-function EventRotate() {
+function eventRotate() {
 	control.setMode("rotate");
 }
-window.EventRotate = EventRotate;
+window.eventRotate = eventRotate;
 
-function EventScale() {
+function eventScale() {
 	control.setMode("scale");
 }
-window.EventScale = EventScale;
+window.eventScale = eventScale;
 
 document.getElementById("rendering").addEventListener("mousedown", onDocumentMouseDown, false);
 
@@ -407,23 +424,23 @@ function onDocumentMouseDown(event) {
 
 	// find intersections
 	raycaster.setFromCamera(mouse, currentCamera);
-	var intersects = raycaster.intersectObjects(scene.children);
+	let intersects = raycaster.intersectObjects(scene.children);
 	let check_obj = 0;
 
 	if (intersects.length > 0) {
-		var obj;
+		let obj;
 		for (obj in intersects) {
 			if (intersects[obj].object.geometry.type == "PlaneGeometry") continue;
 
 			if (intersects[obj].object.type == "Mesh" || intersects[obj].object.type == "Points") {
 				check_obj = 1;
-				control_transform(intersects[obj].object);
+				setControlTransform(intersects[obj].object);
 				break;
 			}
 
 			if (intersects[obj].object.type == "PointLightHelper") {
 				check_obj = 1;
-				control_transform(light);
+				setControlTransform(pointLight);
 				break;
 			}
 		}
@@ -434,11 +451,19 @@ function onDocumentMouseDown(event) {
 	render();
 }
 
-var root;
+var root, pivot;
+var pivots = [],
+	FLOOR = 0,
+	mixer = new THREE.AnimationMixer(scene);
+var animalLoader = new GLTFLoader();
+var animationID3 = [];
+
 function animation(id) {
-	if (type == null) return;
+	if (type == null)
+		return;
+
 	root = mesh.position.clone();
-	cancelAnimationFrame(id_animation);
+	cancelAnimationFrame(animationID);
 
 	switch (id) {
 		case 1:
@@ -448,10 +473,91 @@ function animation(id) {
 			animation2();
 			break;
 		case 3:
+			scene.background = color_BFDBF7;
+			scene.fog = fog_BFDBF7;
+			scene.add(hemiLight);
+			// const hemiLightHelper = new THREE.HemisphereLightHelper(hemiLight, 10);
+			// scene.add(hemiLightHelper);
+			const box = new THREE.Box3().setFromObject(type == 1 ? point : mesh);
+			animalLoader.load('models/gltf/Flamingo.glb', function (gltf) {
+				const animalmesh = gltf.scene.children[0];
+				const clip = gltf.animations[0];
+
+				const s = 0.35;
+				const speed = 2;
+				const factor = 0.25 + Math.random();
+
+				for (let i = 0; i < 5; i++) {
+					const x = ((70 + (box.max.x - box.min.x) / 2) + Math.random() * 100) * (Math.round(Math.random()) ? -1 : 1);
+					const y = 80 + Math.random() * 50;
+					const z = -5 + Math.random() * 10;
+					addAnimal(animalmesh, clip, speed, factor, 1, x, FLOOR + y, z, s, 0, 1);
+				}
+			});
+
+			animalLoader.load('models/gltf/Stork.glb', function (gltf) {
+				const animalmesh = gltf.scene.children[0];
+				const clip = gltf.animations[0];
+
+				const s = 0.35;
+				const speed = 0.5;
+				const factor = 0.5 + Math.random();
+
+				for (let i = 0; i < 5; i++) {
+					const x = ((70 + (box.max.x - box.min.x) / 2) + Math.random() * 100) * (Math.round(Math.random()) ? -1 : 1);
+					const y = 80 + Math.random() * 50;
+					const z = -5 + Math.random() * 10;
+					addAnimal(animalmesh, clip, speed, factor, 1, x, FLOOR + y, z, s, 0, 2);
+				}
+			});
+
+			animalLoader.load('models/gltf/Parrot.glb', function (gltf) {
+				const animalmesh = gltf.scene.children[0];
+				const clip = gltf.animations[0];
+
+				const s = 0.35;
+				const speed = 5;
+				const factor = 1 + Math.random() - 0.5
+
+				for (let i = 0; i < 5; i++) {
+					const x = ((70 + (box.max.x - box.min.x) / 2) + Math.random() * 100) * (Math.round(Math.random()) ? -1 : 1);
+					const y = 80 + Math.random() * 50;
+					const z = -5 + Math.random() * 10;
+					addAnimal(animalmesh, clip, speed, factor, 1, x, FLOOR + y, z, s, 0, 3);
+				}
+			});
+
+			animalLoader.load('models/gltf/Horse.glb', function (gltf) {
+				const animalmesh = gltf.scene.children[0];
+				const clip = gltf.animations[0];
+
+				const s = 0.35;
+				const speed = 2.5;
+				const factor = 1.25 + Math.random();
+
+				for (let i = 0; i < 5; i++) {
+					const x = ((90 + (box.max.x - box.min.x) / 2) + Math.random() * 100) * (Math.round(Math.random()) ? -1 : 1);
+					// const y = 60 + Math.random() * 50;
+					const z = -5 + Math.random() * 10;
+					addAnimal(animalmesh, clip, speed, factor, 1, x, FLOOR, z, s, 1, 4);
+				}
+			});
 			animation3();
 			break;
-		case 4:
-			animation4();
+		default:
+			scene.remove(hemiLight);
+			scene.background = color_343A40;
+			scene.fog = fog_343A40;
+			for (let i = 0; i < animationID3.length; ++i)
+				cancelAnimationFrame(animationID3[i]);
+
+			for (let i = 0; i < pivots.length; ++i)
+				scene.remove(pivots[i]);
+
+			animationID3 = [];
+			pivots = [];
+			mixer = new THREE.AnimationMixer(scene);
+
 			break;
 	}
 
@@ -459,62 +565,98 @@ function animation(id) {
 }
 window.animation = animation;
 
-var ani1_step=0.25;
-function animation1() {
-	mesh.position.y+=ani1_step;
-	mesh.position.z+=ani1_step*3;
+function addAnimal(mesh2, clip, speed, factor, duration, x, y, z, scale, fudgeColor, typeAnimal) {
+	mesh2 = mesh2.clone();
+	mesh2.material = mesh2.material.clone();
 
-	mesh.rotation.x += Math.abs(ani1_step/10);
-	mesh.rotation.y += Math.abs(ani1_step/10);
-	mesh.rotation.z += Math.abs(ani1_step/10);
+	if (fudgeColor)
+		mesh2.material.color.offsetHSL(0, Math.random() * 0.5 - 0.25, Math.random() * 0.5 - 0.25);
+
+	mesh2.factor = factor;
+
+	mixer.clipAction(clip, mesh2).setDuration(duration).startAt(-duration * Math.random()).play();
+	let length = mixer._actions.length;
+	mixer._actions[length-1].timeScale = speed;
+	mesh2.position.set(x, y, z);
+	mesh2.rotation.set(0, x > 0 ? Math.PI : 0, 0);
+	mesh2.scale.set(scale, scale, scale);
+
+	mesh2.castShadow = true;
+	mesh2.receiveShadow = true;
+
+	pivot = new THREE.Group();
+
+	if (typeAnimal != 4) pivot.position.copy(root);
+	else pivot.position.set(root.x, 0, root.z);
+	pivot.rotation_check = 0;
+	scene.add(pivot);
+	pivot.add(mesh2);
+	pivots.push(pivot);
+}
+
+var ani1_step = 0.25;
+
+function animation1() {
+	mesh.position.y += ani1_step;
+	mesh.position.z += ani1_step * 3;
+
+	mesh.rotation.x += Math.abs(ani1_step / 10);
+	mesh.rotation.y += Math.abs(ani1_step / 10);
+	mesh.rotation.z += Math.abs(ani1_step / 10);
 
 	point.rotation.copy(mesh.rotation);
 	point.position.copy(mesh.position);
-	
-	let tam = Math.abs(Math.floor(mesh.position.y-root.y));
-	if(tam%10==0)
-	{
-		if(tam/10 == 3)
-			ani1_step*=-1;	
-		if(tam/10 == 0)
+
+	let distance = Math.abs(Math.floor(mesh.position.y - root.y));
+	if (distance % 10 == 0) {
+		if (distance / 10 == 3)
+			ani1_step *= -1;
+		if (distance / 10 == 0)
 			setMaterial(3);
-			if(tam/10 == 1|| tam/10 == 2)
-			setMaterial(2/(tam/10));
-		}
-		
-		render();
-		
-		id_animation = requestAnimationFrame(animation1);
+		if (distance / 10 == 1 || distance / 10 == 2)
+			setMaterial(2 / (distance / 10));
 	}
-	
+
+	render();
+
+	animationID = requestAnimationFrame(animation1);
+}
+
 var ani2_step = 0;
+
 function animation2() {
 	ani2_step += 0.05;
 	mesh.position.x = 30 * Math.cos(ani2_step) + root.x;
 	mesh.position.y = 30 * Math.sin(ani2_step) + root.y;
 	point.position.copy(mesh.position);
 
-	mesh.rotation.x += 0.03
-	mesh.rotation.y += 0.03
+	mesh.rotation.x += 0.03;
+	mesh.rotation.y += 0.03;
 	point.rotation.copy(mesh.rotation);
 
 	render();
-	id_animation = requestAnimationFrame(animation2);
+	animationID = requestAnimationFrame(animation2);
 }
+
+var clock = new THREE.Clock();
 
 function animation3() {
-	mesh.rotation.x += Math.PI / 180;
-	mesh.rotation.y += Math.PI / 180;
-	mesh.rotation.z += Math.PI / 180;
+	let delta = clock.getDelta();
+	mixer.update(delta);
+	
+	mesh.rotation.x += delta;
+	mesh.rotation.y += delta;
 	point.rotation.copy(mesh.rotation);
+
+	for (let i = 0; i < pivots.length; i++) {
+		let f = pivots[i].children[0].factor;
+		pivots[i].rotation.y += Math.sin((delta * f) / 2) * Math.cos((delta * f) / 2) * 2.5;
+	}
+
 	render();
-	id_animation = requestAnimationFrame(animation3);
+
+	animationID3.push(requestAnimationFrame(animation3));
 }
-
-
-function animation4() {
-	var a=1;
-};
 
 function updateCamera() {
 	currentCamera.updateProjectionMatrix();
