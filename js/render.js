@@ -223,7 +223,7 @@ function init() {
 
 	// Init light source for animation 3
 	{
-		hemiLight = new THREE.HemisphereLight(0xffffff, 0xffffff, 1);
+		hemiLight = new THREE.HemisphereLight(0xffffff, 0xffffff, 0.5);
 		hemiLight.color.setHSL(0.6, 1, 0.6);
 		hemiLight.groundColor.setHSL(0.095, 1, 0.75);
 		hemiLight.position.set(0, 50, 0);
@@ -531,8 +531,8 @@ var animationID3 = [],
 
 function animation(id) {
 	isPostProcessing = false;
-	console.log(scene.children);
 	scene.add(Grid);
+
 	if (type_animation == 3 && id != 3)
 		removeAnimation3();
 	type_animation = id;
@@ -553,12 +553,11 @@ function animation(id) {
 			animation2();
 			break;
 		case 3:
-			// scene.background = color_BFDBF7;
+			removePointLight
 			scene.fog = fog_634A44;
 			scene.remove(Grid);
 			scene.add(hemiLight);
 			scene.add(water);
-			console.log(sky);
 			scene.add(sky);
 			updateSun();
 
@@ -636,9 +635,9 @@ function animation(id) {
 window.animation = animation;
 
 function removeAnimation3() {
-	scene.remove(hemiLight);
 	scene.background = color_343A40;
 	scene.fog = fog_343A40;
+	scene.remove(hemiLight);
 	scene.remove(sky);
 	scene.remove(water);
 
