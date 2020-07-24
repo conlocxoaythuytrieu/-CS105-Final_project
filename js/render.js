@@ -16,7 +16,7 @@ import {
 } from '../js/GLTFLoader.js';
 
 
-var cameraPersp, cameraOrtho, currentCamera;
+var cameraPersp, currentCamera;
 var scene, renderer, control, orbit, gui, texture, meshPlane, raycaster, pointLight, pointLightHelper, hemiLight;
 var textureLoader = new THREE.TextureLoader(),
 	mouse = new THREE.Vector2();
@@ -98,7 +98,7 @@ function init() {
 	// Scene
 	scene = new THREE.Scene();
 	scene.background = color_343A40;
-	
+
 	// Grid
 	const Grid = new THREE.GridHelper(4000, 50, "#A3BAC3", "#A3BAC3");
 	scene.add(Grid);
@@ -299,7 +299,7 @@ function setMaterial(materialID) {
 			break;
 	}
 	mesh.castShadow = true;
-	
+
 	if (materialID != 4) {
 		mesh.material.map = null;
 		mesh.material.needsUpdate = true;
@@ -449,14 +449,17 @@ function onDocumentMouseDown(event) {
 	render();
 }
 
-var root, pivot;
+var root;
 var pivots = [],
-	FLOOR = 0,
 	mixer = new THREE.AnimationMixer(scene);
 var animalLoader = new GLTFLoader();
-var animationID3 = [];
-
+var animationID3 = [], type_animation = 0;
 function animation(id) {
+	if (type_animation == 3 && id != 3)
+		removeAnimation3();
+
+	type_animation = id;
+
 	if (type == null)
 		return;
 
@@ -474,7 +477,7 @@ function animation(id) {
 			scene.background = color_BFDBF7;
 			scene.fog = fog_BFDBF7;
 			scene.add(hemiLight);
-			
+
 			const box = new THREE.Box3().setFromObject(type == 1 ? point : mesh);
 			animalLoader.load('models/gltf/Flamingo.glb', function (gltf) {
 				const animalmesh = gltf.scene.children[0];
@@ -488,7 +491,7 @@ function animation(id) {
 					const x = ((70 + (box.max.x - box.min.x) / 2) + Math.random() * 100) * (Math.round(Math.random()) ? -1 : 1);
 					const y = 80 + Math.random() * 50;
 					const z = -5 + Math.random() * 10;
-					addAnimal(animalmesh, clip, speed, factor, 1, x, FLOOR + y, z, s, 0, 1);
+					addAnimal(animalmesh, clip, speed, factor, 1, x, y, z, s, 0, 1);
 				}
 			});
 
@@ -504,7 +507,7 @@ function animation(id) {
 					const x = ((70 + (box.max.x - box.min.x) / 2) + Math.random() * 100) * (Math.round(Math.random()) ? -1 : 1);
 					const y = 80 + Math.random() * 50;
 					const z = -5 + Math.random() * 10;
-					addAnimal(animalmesh, clip, speed, factor, 1, x, FLOOR + y, z, s, 0, 2);
+					addAnimal(animalmesh, clip, speed, factor, 1, x, y, z, s, 0, 2);
 				}
 			});
 
@@ -520,7 +523,7 @@ function animation(id) {
 					const x = ((70 + (box.max.x - box.min.x) / 2) + Math.random() * 100) * (Math.round(Math.random()) ? -1 : 1);
 					const y = 80 + Math.random() * 50;
 					const z = -5 + Math.random() * 10;
-					addAnimal(animalmesh, clip, speed, factor, 1, x, FLOOR + y, z, s, 0, 3);
+					addAnimal(animalmesh, clip, speed, factor, 1, x, y, z, s, 0, 3);
 				}
 			});
 
@@ -535,30 +538,31 @@ function animation(id) {
 				for (let i = 0; i < 5; i++) {
 					const x = ((90 + (box.max.x - box.min.x) / 2) + Math.random() * 100) * (Math.round(Math.random()) ? -1 : 1);
 					const z = -5 + Math.random() * 10;
-					addAnimal(animalmesh, clip, speed, factor, 1, x, FLOOR, z, s, 1, 4);
+					addAnimal(animalmesh, clip, speed, factor, 1, x, 0, z, s, 1, 4);
 				}
 			});
 			animation3();
-			break;
-		default:
-			scene.remove(hemiLight);
-			scene.background = color_343A40;
-			scene.fog = fog_343A40;
-			for (let i = 0; i < animationID3.length; ++i)
-				cancelAnimationFrame(animationID3[i]);
-
-			for (let i = 0; i < pivots.length; ++i)
-				scene.remove(pivots[i]);
-
-			animationID3 = [];
-			pivots = [];
-			mixer = new THREE.AnimationMixer(scene);
-
 			break;
 	}
 
 	render();
 }
+
+function removeAnimation3() {
+	scene.remove(hemiLight);
+	scene.background = color_343A40;
+	scene.fog = fog_343A40;
+	for (let i = 0; i < animationID3.length; ++i)
+		cancelAnimationFrame(animationID3[i]);
+
+	for (let i = 0; i < pivots.length; ++i)
+		scene.remove(pivots[i]);
+
+	animationID3 = [];
+	pivots = [];
+	mixer = new THREE.AnimationMixer(scene);
+}
+
 window.animation = animation;
 
 function addAnimal(mesh2, clip, speed, factor, duration, x, y, z, scale, fudgeColor, typeAnimal) {
@@ -572,7 +576,7 @@ function addAnimal(mesh2, clip, speed, factor, duration, x, y, z, scale, fudgeCo
 
 	mixer.clipAction(clip, mesh2).setDuration(duration).startAt(-duration * Math.random()).play();
 	let length = mixer._actions.length;
-	mixer._actions[length-1].timeScale = speed;
+	mixer._actions[length - 1].timeScale = speed;
 	mesh2.position.set(x, y, z);
 	mesh2.rotation.set(0, x > 0 ? Math.PI : 0, 0);
 	mesh2.scale.set(scale, scale, scale);
@@ -580,7 +584,7 @@ function addAnimal(mesh2, clip, speed, factor, duration, x, y, z, scale, fudgeCo
 	mesh2.castShadow = true;
 	mesh2.receiveShadow = true;
 
-	pivot = new THREE.Group();
+	let pivot = new THREE.Group();
 
 	if (typeAnimal != 4) pivot.position.copy(root);
 	else pivot.position.set(root.x, 0, root.z);
@@ -639,7 +643,7 @@ var clock = new THREE.Clock();
 function animation3() {
 	let delta = clock.getDelta();
 	mixer.update(delta);
-	
+
 	mesh.rotation.x += delta;
 	mesh.rotation.y += delta;
 	point.rotation.copy(mesh.rotation);
