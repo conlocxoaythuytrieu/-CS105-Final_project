@@ -23,7 +23,12 @@ import {
 import {
 	AfterimagePass
 } from '../js/AfterimagePass.js';
-
+import {
+	Water
+} from '../js/Water.js';
+import {
+	Sky
+} from '../js/Sky.js';
 
 var cameraPersp, cameraOrtho, currentCamera;
 var scene, renderer, control, orbit, gui, texture, raycaster;
@@ -34,7 +39,8 @@ var LightSwitch = false,
 	type = null,
 	pre_material = null;
 var animationID;
-var composer, afterimagePass, isPostProcessing = false;
+var composer, afterimagePass, isPostProcessing = false,
+	water, sun, sky;
 
 var BoxGeometry = new THREE.BoxGeometry(50, 50, 50, 20, 20, 20);
 var SphereGeometry = new THREE.SphereGeometry(30, 50, 50);
@@ -105,6 +111,9 @@ var color_343A40 = new THREE.Color("#343A40"),
 	color_BFDBF7 = new THREE.Color("#BFDBF7");
 var fog_343A40 = new THREE.Fog("#343A40", 0.5),
 	fog_BFDBF7 = new THREE.Fog("#BFDBF7", 0.5);
+
+var waterGeometry = new THREE.PlaneBufferGeometry(10000, 10000);
+
 init();
 render();
 
@@ -177,6 +186,8 @@ function init() {
 		currentCamera.updateProjectionMatrix();
 
 		renderer.setSize(WIDTH, HEIGHT);
+		composer.setSize(WIDTH, HEIGHT);
+
 		render();
 	});
 
@@ -228,6 +239,48 @@ function init() {
 		afterimagePass = new AfterimagePass();
 		afterimagePass.uniforms["damp"].value = 0.96;
 		composer.addPass(afterimagePass);
+	}
+
+
+	// Sun
+	{
+		sun = new THREE.Vector3();
+
+	}
+
+	// Water
+	{
+		water = new Water(
+			waterGeometry, {
+				textureWidth: 512,
+				textureHeight: 512,
+				waterNormals: new THREE.TextureLoader().load('textures/waternormals.jpg', function (texture) {
+
+					texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+
+				}),
+				alpha: 1.0,
+				sunDirection: new THREE.Vector3(),
+				sunColor: 0xffffff,
+				waterColor: 0x001e0f,
+				distortionScale: 3.7,
+				fog: scene.fog !== undefined
+			}
+		);
+
+		water.rotation.x = -Math.PI / 2;
+	}
+
+	// Skybox
+	{
+		sky = new Sky();
+		sky.scale.setScalar(10000);
+
+		var uniforms = sky.material.uniforms;
+		uniforms['turbidity'].value = 10;
+		uniforms['rayleigh'].value = 2;
+		uniforms['mieCoefficient'].value = 0.005;
+		uniforms['mieDirectionalG'].value = 0.8;
 	}
 }
 
@@ -510,6 +563,9 @@ function animation(id) {
 			scene.background = color_BFDBF7;
 			scene.fog = fog_BFDBF7;
 			scene.add(hemiLight);
+			scene.add(water);
+			scene.add(sky);
+			updateSun();
 
 			const box = new THREE.Box3().setFromObject(type == 1 ? point : mesh);
 			animalLoader.load('models/gltf/Flamingo.glb', function (gltf) {
@@ -700,4 +756,27 @@ function animation3() {
 function updateCamera() {
 	currentCamera.updateProjectionMatrix();
 	render();
+}
+
+var parameters = {
+	inclination: 0.49,
+	azimuth: 0.205
+};
+
+var pmremGenerator = new THREE.PMREMGenerator(renderer);
+
+function updateSun() {
+
+	var theta = Math.PI * (parameters.inclination - 0.5);
+	var phi = 2 * Math.PI * (parameters.azimuth - 0.5);
+
+	sun.x = Math.cos(phi);
+	sun.y = Math.sin(phi) * Math.sin(theta);
+	sun.z = Math.sin(phi) * Math.cos(theta);
+
+	sky.material.uniforms['sunPosition'].value.copy(sun);
+	water.material.uniforms['sunDirection'].value.copy(sun).normalize();
+
+	scene.environment = pmremGenerator.fromScene(sky).texture;
+
 }
