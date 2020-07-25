@@ -536,10 +536,11 @@ var pivots = [],
 var animalLoader = new GLTFLoader();
 var animationID3 = [],
 	type_animation = 0;
-
+var box = new THREE.Box3();
 function animation(id) {
 	isPostProcessing = false;
 	scene.add(Grid);
+	box.setFromObject(type == 1 ? point : mesh);
 
 	if (type_animation == 3 && id != 3)
 		removeAnimation3();
@@ -557,7 +558,7 @@ function animation(id) {
 			break;
 		case 2:
 			isPostProcessing = true;
-
+			//  
 			animation2();
 			break;
 		case 3:
@@ -568,8 +569,6 @@ function animation(id) {
 			scene.add(water);
 			scene.add(sky);
 			updateSun();
-
-			const box = new THREE.Box3().setFromObject(type == 1 ? point : mesh);
 
 			{
 				animalLoader.load('models/gltf/Flamingo.glb', function (gltf) {
@@ -728,8 +727,9 @@ var ani2_step = 0;
 
 function animation2() {
 	ani2_step += 0.05;
-	mesh.position.x = 30 * Math.cos(ani2_step) + root.x;
-	mesh.position.y = 30 * Math.sin(ani2_step) + root.y;
+	let width = box.max.x - box.min.x;
+	mesh.position.x = width * Math.cos(ani2_step) + root.x;
+	mesh.position.y = width * Math.sin(ani2_step) + root.y;
 	point.position.copy(mesh.position);
 
 	mesh.rotation.x += 0.03;
